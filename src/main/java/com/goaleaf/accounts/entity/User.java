@@ -1,11 +1,15 @@
 package com.goaleaf.accounts.entity;
 
 import com.github.pplociennik.commons.persistence.ModifiableDataEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UuidGenerator;
 
 /**
  * An entity describing the USERS table in the database.
@@ -21,9 +25,9 @@ import lombok.NoArgsConstructor;
 public class User extends ModifiableDataEntity {
 
     @Id
-    @GeneratedValue( strategy = GenerationType.IDENTITY )
+    @UuidGenerator
     @Column( name = "ID", nullable = false, unique = true, updatable = false )
-    private Long userId;
+    private String userId;
 
     @Column( name = "NAME" )
     private String userName;

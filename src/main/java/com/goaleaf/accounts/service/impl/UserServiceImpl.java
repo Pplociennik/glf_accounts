@@ -50,13 +50,54 @@ class UserServiceImpl implements UserService {
      * @return the user with the specified email address.
      */
     @Override
-    public UserDto fetchUser( @NonNull String aEmailAddress ) {
+    public UserDto getUserByEmailAddress( @NonNull String aEmailAddress ) {
         requireNonEmpty( aEmailAddress );
         Optional< User > optionalUser = userRepository.findByEmailAddress( aEmailAddress );
 
-        return UserMapper.mapToDto(
-                optionalUser.orElseThrow(
-                        () -> new ResourceNotFoundException( User.class.getName(), "emailAddress", aEmailAddress )
-                ) );
+        User user = optionalUser.orElseThrow(
+                () -> new ResourceNotFoundException( User.class.getName(), "emailAddress", aEmailAddress )
+        );
+
+        return UserMapper.mapToDto( user );
+    }
+
+    /**
+     * Updates the user data in database.
+     *
+     * @param aUserDto
+     *         data necessary to update the user.
+     * @return the updated user data.
+     */
+    @Override
+    public UserDto updateUser( @NonNull UserDto aUserDto ) {
+        requireNonNull( aUserDto );
+        User userFromDatabase = getUser( aUserDto.getUserId() );
+
+        userFromDatabase.setDescription( aUserDto.getDescription() );
+        userRepository.save( userFromDatabase );
+
+        return UserMapper.mapToDto( userFromDatabase );
+    }
+
+    /**
+     * Deletes user with the specified identifier from database.
+     *
+     * @param aIdentifier
+     *         an identifier of the user to be deleted.
+     */
+    @Override
+    public void deleteUser( @NonNull String aIdentifier ) {
+        requireNonEmpty( aIdentifier );
+        User user = getUser( aIdentifier );
+
+        userRepository.delete( user );
+    }
+
+    private User getUser( String aIdentifier ) {
+        Optional< User > optionalUser = userRepository.findByUserId( aIdentifier );
+
+        return optionalUser.orElseThrow(
+                () -> new ResourceNotFoundException( User.class.getName(), "userId", aIdentifier )
+        );
     }
 }

@@ -26,5 +26,22 @@ public interface UserService {
      *         an email address connected to the user.
      * @return the user with the specified email address.
      */
-    UserDto fetchUser( @NonNull String aEmailAddress );
+    UserDto getUserByEmailAddress( @NonNull String aEmailAddress );
+
+    /**
+     * Updates the user data in database.
+     *
+     * @param aUserDto
+     *         data necessary to update the user.
+     * @return the updated user data.
+     */
+    UserDto updateUser( @NonNull UserDto aUserDto );
+
+    /**
+     * Deletes user with the specified identifier from database.
+     *
+     * @param aIdentifier
+     *         an identifier of the user to be deleted.
+     */
+    void deleteUser( @NonNull String aIdentifier );
 }

@@ -3,7 +3,6 @@ package com.goaleaf.accounts.controller;
 import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.dto.UserDto;
 import com.goaleaf.accounts.service.UserService;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,9 +28,25 @@ class UserController {
                 .body( new ResponseDto( "201", "User created successfully" ) );
     }
 
-    @GetMapping( path = "/fetch" )
+    @GetMapping( path = "/user" )
     ResponseEntity< UserDto > fetchUser( @RequestParam String aEmailAddress ) {
-        UserDto fetchedUser = userService.fetchUser( aEmailAddress );
+        UserDto fetchedUser = userService.getUserByEmailAddress( aEmailAddress );
         return ResponseEntity.status( HttpStatus.OK ).body( fetchedUser );
+    }
+
+    @PutMapping( "/update" )
+    ResponseEntity< ResponseDto > updateUser( @RequestBody UserDto aUserDto ) {
+        userService.updateUser( aUserDto );
+        return ResponseEntity
+                .status( HttpStatus.OK )
+                .body( new ResponseDto( "200", "User updated successfully." ) );
+    }
+
+    @DeleteMapping( path = "/delete" )
+    ResponseEntity< ResponseDto > deleteUser( @RequestParam String aIdentifier ) {
+        userService.deleteUser( aIdentifier );
+        return ResponseEntity
+                .status( HttpStatus.OK )
+                .body( new ResponseDto( "200", "User deleted successfully." ) );
     }
 }
