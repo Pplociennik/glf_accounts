@@ -10,7 +10,7 @@
     </parent>
 
     <groupId>com.goaleaf</groupId>
-    <artifactId>accounts</artifactId>
+    <artifactId>glf-accounts</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <name>glf-accounts</name>
