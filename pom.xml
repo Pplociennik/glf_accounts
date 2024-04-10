@@ -42,12 +42,12 @@
         <dependency>
             <groupId>com.github.pplociennik</groupId>
             <artifactId>pp-commons</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.pplociennik</groupId>
             <artifactId>pp-modinfo</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
