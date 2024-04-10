@@ -74,6 +74,21 @@
                     </image>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${version.resources-plugin}</version>
+                <configuration>
+                    <resources>
+                        <resource>
+                            <directory>
+                                src/main/resources
+                            </directory>
+                            <filtering>true</filtering>
+                        </resource>
+                    </resources>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

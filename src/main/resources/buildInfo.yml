@@ -1,5 +1,5 @@
 build:
   name: Goaleaf Accounts Microservice
-  version: 1.0.0-SNAPSHOT
+  version: ${project.version}
   date: 04.04.2024
   os: Windows
