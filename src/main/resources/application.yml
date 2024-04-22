@@ -7,9 +7,9 @@ spring:
 
   config:
     import:
-      - classpath:buildEnvInfo.yml
-      - classpath:buildInfo.yml
-      - classpath:ContactInfo.yml
+      - "configserver:http://localhost:8071/"
+      - "classpath:buildInfo.yml"
+      - "classpath:buildEnvInfo.yml"
 
   datasource:
     url: jdbc:h2:mem:testdb
@@ -30,3 +30,11 @@ spring:
 springdoc:
   api-docs:
     path: /api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - refresh
+          - busrefresh
