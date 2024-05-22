@@ -11,6 +11,12 @@ spring:
       - "classpath:buildInfo.yml"
       - "classpath:buildEnvInfo.yml"
 
+  rabbitmq:
+    host: "localhost"
+    port: 5672
+    username: "guest"
+    password: "guest"
+
   datasource:
     url: jdbc:h2:mem:testdb
     driverClassName: org.h2.Driver
