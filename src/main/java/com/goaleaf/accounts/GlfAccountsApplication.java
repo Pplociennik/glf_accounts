@@ -9,6 +9,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import java.time.Instant;
+
 @SpringBootApplication
 @EnableJpaAuditing( auditorAwareRef = "auditAwareImpl" )
 @Import( value = { ModuleInfoConfiguration.class } )
@@ -19,7 +21,7 @@ public class GlfAccountsApplication {
     }
 
     @Bean
-    AuditorAware< String > auditAwareImpl() {
+    AuditorAware< Instant > auditAwareImpl() {
         return new AuditAwareImpl();
     }
 
