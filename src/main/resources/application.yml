@@ -4,43 +4,21 @@ server:
 spring:
   application:
     name: glf-accounts
+  profiles:
+    active: dev
 
   config:
     import:
-      - "configserver:http://configserver:8071/"
+      - "configserver:http://localhost:8071/"
       - "classpath:buildInfo.yml"
       - "classpath:buildEnvInfo.yml"
-
-  rabbitmq:
-    host: "localhost"
-    port: 5672
-    username: "guest"
-    password: "guest"
-
-#  datasource:
-#    url: jdbc:h2:mem:testdb
-#    driverClassName: org.h2.Driver
-#    username: sa
-#    password:
-
-  h2:
-    console:
-      enabled: true
-
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: create
-    show-sql: true
 
 springdoc:
   api-docs:
     path: /api-docs
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include:
-          - refresh
-          - busrefresh
+info:
+  app:
+    name: "glf-accounts"
+    description: "Goaleaf accounts application."
+    version: "0.0.1-SNAPSHOT"
