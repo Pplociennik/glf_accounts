@@ -85,6 +85,15 @@
                         <name>com.goaleaf/${project.artifactId}:${project.version}</name>
                     </image>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <goals>
+                            <goal>build-image</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
