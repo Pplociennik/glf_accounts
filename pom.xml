@@ -151,7 +151,7 @@
         </profile>
         <!-- 'prod' profile -->
         <profile>
-            <id>qa</id>
+            <id>prod</id>
             <activation>
                 <property>
                     <name>spring.profiles.active</name>
