@@ -19,6 +19,6 @@ springdoc:
 
 info:
   app:
-    name: "glf-accounts"
-    description: "Goaleaf accounts application."
-    version: "0.0.1-SNAPSHOT"
+    name: "@project.name@"
+    description: "@project.description@"
+    version: "@project.version@"
