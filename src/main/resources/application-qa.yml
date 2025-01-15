@@ -4,8 +4,12 @@ server:
 spring:
   application:
     name: glf-accounts
-  profiles:
-    active: "@spring.profiles.active@"
+
+  config:
+    import:
+      - "configserver:http://configserver:8071/"
+      - "classpath:buildInfo.yml"
+      - "classpath:buildEnvInfo.yml"
 
 springdoc:
   api-docs:

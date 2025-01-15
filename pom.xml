@@ -80,6 +80,12 @@
     </dependencyManagement>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -181,6 +187,7 @@
                             <image>
                                 <name>com.goaleaf/${project.artifactId}:${project.version}</name>
                             </image>
+                            <jvmArguments>-Dspring.profiles.active=qa</jvmArguments>
                         </configuration>
                         <executions>
                             <execution>
