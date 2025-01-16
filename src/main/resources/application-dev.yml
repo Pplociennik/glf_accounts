@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: glf-accounts
-  profiles:
-    active: dev
 
   config:
     import:
