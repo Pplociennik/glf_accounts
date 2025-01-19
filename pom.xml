@@ -61,12 +61,12 @@
         <dependency>
             <groupId>com.github.pplociennik</groupId>
             <artifactId>pp-commons</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>${version.pp-commons}</version>
         </dependency>
         <dependency>
             <groupId>com.github.pplociennik</groupId>
             <artifactId>pp-modinfo</artifactId>
-            <version>1.3.0-SNAPSHOT</version>
+            <version>${version.pp-modinfo}</version>
         </dependency>
 
         <dependency>
