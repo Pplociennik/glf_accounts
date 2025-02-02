@@ -3,9 +3,14 @@ server:
 
 spring:
   application:
-    name: glf-accounts
+    name: "glf-accounts"
   profiles:
     active: "@spring.profiles.active@"
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 springdoc:
   api-docs:

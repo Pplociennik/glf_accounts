@@ -11,6 +11,24 @@ spring:
       - "classpath:buildInfo.yml"
       - "classpath:buildEnvInfo.yml"
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    liveness-state:
+      enabled: true
+    readiness-state:
+      enabled: true
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 springdoc:
   api-docs:
     path: /api-docs

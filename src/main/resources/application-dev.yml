@@ -3,13 +3,40 @@ server:
 
 spring:
   application:
-    name: glf-accounts
+    name: "glf-accounts"
 
   config:
     import:
       - "configserver:http://localhost:8071/"
       - "classpath:buildInfo.yml"
       - "classpath:buildEnvInfo.yml"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    liveness-state:
+      enabled: true
+    readiness-state:
+      enabled: true
+  endpoint:
+    health:
+      enabled: true
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  info:
+    env:
+      enabled: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
 
 springdoc:
   api-docs:
