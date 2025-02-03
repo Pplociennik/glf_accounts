@@ -208,6 +208,7 @@
                                 <name>com.goaleaf/${project.artifactId}:${project.version}</name>
                             </image>
                             <jvmArguments>-Dspring.profiles.active=qa</jvmArguments>
+                            <includeSystemScope>true</includeSystemScope>
                         </configuration>
                         <executions>
                             <execution>
