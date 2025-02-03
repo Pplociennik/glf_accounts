@@ -38,6 +38,14 @@ management:
       export:
         enabled: true
 
+logging:
+  level:
+    com:
+      goaleaf:
+        accounts: DEBUG
+  pattern:
+    level: "%5p [${spring.application.name}, %X{trace_id}, %X{span_id}]"
+
 springdoc:
   api-docs:
     path: /api-docs

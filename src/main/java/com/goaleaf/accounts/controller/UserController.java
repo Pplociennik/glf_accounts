@@ -4,9 +4,12 @@ import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.dto.UserDto;
 import com.goaleaf.accounts.service.UserService;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 /**
  * A controller being the API for managing users.
@@ -18,10 +21,13 @@ import org.springframework.web.bind.annotation.*;
 @AllArgsConstructor
 class UserController {
 
+    private static final Logger logger = LoggerFactory.getLogger( UserController.class );
+
     private UserService userService;
 
     @PostMapping( "/create" )
     ResponseEntity< ResponseDto > createUser( @RequestBody UserDto aUserDto ) {
+        logger.debug( "Started creating a new account." );
         userService.createUser( aUserDto );
         return ResponseEntity
                 .status( HttpStatus.CREATED )
