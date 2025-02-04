@@ -78,7 +78,7 @@
             <artifactId>lombok</artifactId>
         </dependency>
 
-<!--   Open Telemetry     -->
+        <!--   Open Telemetry     -->
         <dependency>
             <groupId>io.opentelemetry.javaagent</groupId>
             <artifactId>opentelemetry-javaagent</artifactId>
@@ -209,6 +209,8 @@
                             </image>
                             <jvmArguments>-Dspring.profiles.active=qa</jvmArguments>
                             <includeSystemScope>true</includeSystemScope>
+                            <!--        Image with curl installed                -->
+                            <runImage>buildpack-deps:jammy-curl</runImage>
                         </configuration>
                         <executions>
                             <execution>
