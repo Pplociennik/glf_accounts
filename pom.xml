@@ -201,7 +201,36 @@
                 </dependency>
             </dependencies>
         </profile>
-        <!-- build docker image -->
+
+        <!--    Properties necessary for building a docker image on linux systems.    -->
+        <profile>
+            <id>linux</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <image-exec-id>run-sh-file</image-exec-id>
+                <image-exec-executable>sh</image-exec-executable>
+                <image-exec-argument>-c</image-exec-argument>
+                <image-exec-script-file>${project.basedir}/docker/build.sh</image-exec-script-file>
+            </properties>
+        </profile>
+
+        <!--    Properties necessary for building docker image on windows systems. Active by default.    -->
+        <profile>
+            <id>windows</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <image-exec-id>run-bat-file</image-exec-id>
+                <image-exec-executable>cmd</image-exec-executable>
+                <image-exec-argument>/c</image-exec-argument>
+                <image-exec-script-file>${project.basedir}/docker/build.bat</image-exec-script-file>
+            </properties>
+        </profile>
+
+        <!--    Builds a docker image during the maven build.    -->
         <profile>
             <id>withDockerImage</id>
             <activation>
@@ -210,30 +239,68 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <configuration>
-                            <image>
-                                <name>com.goaleaf/${project.artifactId}:${project.version}</name>
-                            </image>
-                            <jvmArguments>-Dspring.profiles.active=qa</jvmArguments>
-                            <includeSystemScope>true</includeSystemScope>
-                            <!--        Image with curl installed                -->
-                            <runImage>buildpack-deps:jammy-curl</runImage>
-                        </configuration>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>build-image</id>
-                                <goals>
-                                    <goal>build-image</goal>
-                                </goals>
+                                <id>copy</id>
                                 <phase>package</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>copy-opentelemetry</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <includeArtifactIds>opentelemetry-javaagent</includeArtifactIds>
+                                    <includeTypes>jar</includeTypes>
+                                    <outputDirectory>${project.basedir}/docker</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>${project.artifactId}</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <destFileName>glf-accounts.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.basedir}/docker</outputDirectory>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${version.maven-exec-plugin}</version>
+                        <executions>
+                            <execution>
+                                <id>${image-exec-id}</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>${image-exec-executable}</executable>
+                                    <arguments>
+                                        <argument>${image-exec-argument}</argument>
+                                        <argument>${image-exec-script-file}</argument>
+                                    </arguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
         </profile>
+
     </profiles>
 
 </project>

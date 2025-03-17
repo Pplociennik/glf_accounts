@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 .vscode/
+/docker/glf-accounts.jar
+/docker/opentelemetry-javaagent-2.12.0.jar
