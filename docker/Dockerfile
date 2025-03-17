@@ -6,5 +6,5 @@ ARG JAVA_AGENT_FILE=docker/opentelemetry-javaagent-2.12.0.jar
 RUN microdnf install -y curl
 
 COPY ${JAR_FILE} app.jar
-COPY ${JAVA_AGENT_FILE} /app/libs/opentelemetry-javaagent-2.12.0.jar
+COPY ${JAVA_AGENT_FILE} /workspace/BOOT-INF/lib/opentelemetry-javaagent-2.12.0.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
