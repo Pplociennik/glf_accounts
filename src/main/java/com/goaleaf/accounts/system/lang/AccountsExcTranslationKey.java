@@ -3,7 +3,9 @@ package com.goaleaf.accounts.system.lang;
 import com.github.pplociennik.commons.lang.TranslationKey;
 
 /**
- * TODO: Describe this class.
+ * This enum provides keys for exception-related translations used in the accounts module.
+ * It serves as a bridge between Java code and the corresponding resource bundles containing
+ * user-readable messages for exceptions.
  *
  * @author Created by: Pplociennik at 19.03.2025 19:52
  */
