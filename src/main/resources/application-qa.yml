@@ -3,7 +3,12 @@ server:
 
 spring:
   application:
-    name: glf-accounts
+    name: "glf-accounts"
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
 
   config:
     import:
@@ -46,3 +51,15 @@ info:
     name: "@project.name@"
     description: "@project.description@"
     version: "@project.version@"
+
+# Custom
+com:
+  goaleaf:
+    accounts:
+      auth:
+        service:
+          url: ${COM_GOALEAF_ACCOUNTS_AUTH_SERVICE_URL}
+        access:
+          token:
+            validationStrategy: ${COM_GOALEAF_ACCOUNTS_AUTH_ACCESS_TOKEN_VALIDATIONSTRATEGY}
+      clientUri: ${COM_GOALEAF_ACCOUNTS_CLIENT_URI}
