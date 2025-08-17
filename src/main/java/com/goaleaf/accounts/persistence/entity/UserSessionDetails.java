@@ -5,9 +5,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -24,7 +28,6 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Builder
 @Table( name = "ACCOUNTS_USER_SESSION_DETAILS" )
 @Entity
 @AllArgsConstructor
@@ -50,6 +53,28 @@ public class UserSessionDetails extends BaseDataEntity {
     @Column( name = "DEVICE" )
     private String device;
 
+    private UserSessionDetails( Builder builder ) {
+        super();
+        this.id = builder.id;
+        this.sessionId = builder.sessionId;
+        this.refreshToken = builder.refreshToken;
+        this.authenticatedUserId = builder.authenticatedUserId;
+        this.location = builder.location;
+        this.device = builder.device;
+
+        setCreatedAt( builder.createdAt );
+        setCreatedBy( builder.createdBy );
+    }
+
+    /**
+     * Creates a new builder object.
+     *
+     * @return a new builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
     @Override
     public boolean equals( Object o ) {
         if ( o == null || getClass() != o.getClass() ) return false;
@@ -60,5 +85,63 @@ public class UserSessionDetails extends BaseDataEntity {
     @Override
     public int hashCode() {
         return Objects.hash( id, sessionId, refreshToken, authenticatedUserId, location, device );
+    }
+
+    public static class Builder {
+        private UUID id;
+        private String sessionId;
+        private String refreshToken;
+        private String authenticatedUserId;
+        private String location;
+        private String device;
+        private Instant createdAt;
+        private String createdBy;
+
+        private Builder() {
+        }
+
+        public Builder id( UUID aId ) {
+            this.id = aId;
+            return this;
+        }
+
+        public Builder sessionId( String aSessionId ) {
+            this.sessionId = aSessionId;
+            return this;
+        }
+
+        public Builder refreshToken( String aRefreshToken ) {
+            this.refreshToken = aRefreshToken;
+            return this;
+        }
+
+        public Builder authenticatedUserId( String aAuthenticatedUserId ) {
+            this.authenticatedUserId = aAuthenticatedUserId;
+            return this;
+        }
+
+        public Builder location( String aLocation ) {
+            this.location = aLocation;
+            return this;
+        }
+
+        public Builder device( String aDevice ) {
+            this.device = aDevice;
+            return this;
+        }
+
+        public Builder createdAt( Instant aCreatedAt ) {
+            this.createdAt = aCreatedAt;
+            return this;
+        }
+
+        public Builder createdBy( String aCreatedBy ) {
+            this.createdBy = aCreatedBy;
+            return this;
+        }
+
+        public UserSessionDetails build() {
+            return new UserSessionDetails( this );
+        }
     }
 }

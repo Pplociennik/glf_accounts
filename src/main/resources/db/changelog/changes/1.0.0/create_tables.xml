@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <!-- ############################################################################################################### -->
+
+    <!--  ############## PPGLF-28 ##############  -->
+
+    <!-- Create table USER_DETAILS -->
+    <changeSet id="17.08.2025 00:00:00" author="pplociennik">
+        <comment>Creates the table 'USER_DETAILS'.</comment>
+        <createTable tableName="USER_DETAILS">
+            <column name="ID" type="BINARY(16)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="USER_ID" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="NAME" type="VARCHAR(255)"/>
+            <column name="EMAIL" type="VARCHAR(255)"/>
+            <column name="DESCRIPTION" type="VARCHAR(1000)"/>
+            <column name="CREATED_AT" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_BY" type="VARCHAR(255)" defaultValue="SYSTEM">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LAST_MODIFIED_AT" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LAST_MODIFIED_BY" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Create the table ACCOUNTS_USER_SESSION_DETAILS -->
+    <changeSet id="17.08.2025 00:10:00" author="pplociennik">
+        <comment>Creates the table 'ACCOUNTS_USER_SESSION_DETAILS'.</comment>
+        <createTable tableName="ACCOUNTS_USER_SESSION_DETAILS">
+            <column name="ID" type="BINARY(16)">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="SESSION_ID" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="REFRESH_TOKEN" type="VARCHAR(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="AUTHENTICATED_USER_ID" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="LOCATION" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="DEVICE" type="VARCHAR(255)"/>
+            <column name="CREATED_AT" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="CREATED_BY" type="VARCHAR(255)" defaultValue="SYSTEM">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Indexes for better performance. -->
+        <createIndex tableName="ACCOUNTS_USER_SESSION_DETAILS" indexName="idx_session_details_session_id">
+            <column name="SESSION_ID"/>
+        </createIndex>
+
+        <createIndex tableName="ACCOUNTS_USER_SESSION_DETAILS" indexName="idx_session_details_authenticated_user_id">
+            <column name="AUTHENTICATED_USER_ID"/>
+        </createIndex>
+    </changeSet>
+
+    <!-- ############################################################################################################### -->
+
+</databaseChangeLog>

@@ -30,6 +30,7 @@
         <version.test-containers>1.19.7</version.test-containers>
         <version.junit-jupiter>1.19.7</version.junit-jupiter>
         <version.testcontainers-mysql>1.19.7</version.testcontainers-mysql>
+        <version.liquibase-maven-plugin>4.33.0</version.liquibase-maven-plugin>
     </properties>
 
     <dependencies>
@@ -115,6 +116,13 @@
             <version>${version.java-jwt}</version>
         </dependency>
 
+        <!--  Liquibase  -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>${version.liquibase-maven-plugin}</version>
+        </dependency>
+
         <!--    E2E tests    -->
         <!-- TestContainers -->
         <dependency>
@@ -191,6 +199,23 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <!-- Liquibase -->
+            <plugin>
+                <groupId>org.liquibase</groupId>
+                <artifactId>liquibase-maven-plugin</artifactId>
+                <version>${version.liquibase-maven-plugin}</version>
+                <configuration>
+                    <propertyFile>src/main/resources/liquibase/liquibase.properties</propertyFile>
+                    <propertyFileWillOverride>true</propertyFileWillOverride>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.liquibase</groupId>
+                        <artifactId>liquibase-core</artifactId>
+                        <version>${version.liquibase-maven-plugin}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
@@ -394,7 +419,9 @@
                                     <executable>cmd</executable>
                                     <arguments>
                                         <argument>/c</argument>
-                                        <argument>${project.basedir}/../.env/.docker/integration/keycloak-config/build.bat</argument>
+                                        <argument>
+                                            ${project.basedir}/../.env/.docker/integration/keycloak-config/build.bat
+                                        </argument>
                                     </arguments>
                                 </configuration>
                             </execution>

@@ -9,6 +9,9 @@ spring:
       hibernate:
         jdbc:
           time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE}
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog.xml
 
   config:
     import:
