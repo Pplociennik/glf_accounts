@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
@@ -40,6 +41,7 @@ class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetailsDto createUserDetails( @NonNull UserDetailsDto aUserDetailsDto ) {
         requireNonNull( aUserDetailsDto );
         UserDetails userDetailsEntity = UserDetailsMapper.mapToEntity( aUserDetailsDto );
+        userDetailsEntity.setCreatedAt( Instant.now() );
         UserDetails savedUserDetails = userDetailsRepository.save( userDetailsEntity );
 
         return UserDetailsMapper.mapToDto( savedUserDetails );

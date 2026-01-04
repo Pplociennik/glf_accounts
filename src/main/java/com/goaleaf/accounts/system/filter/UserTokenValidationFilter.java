@@ -336,7 +336,8 @@ public class UserTokenValidationFilter extends OncePerRequestFilter {
          */
         @Override
         public Object getAttribute( String name ) {
-            return attributes.get( name );
+            Object result = attributes.get( name );
+            return result == null ? super.getAttribute( name ) : result;
         }
 
     }

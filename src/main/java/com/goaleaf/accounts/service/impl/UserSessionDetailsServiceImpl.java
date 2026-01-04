@@ -27,6 +27,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -276,6 +277,8 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
                 .device( aDetails.getDeviceName() )
                 .sessionId( aSessionID )
                 .refreshToken( aAuthenticationToken.getRefreshToken() )
+                .createdAt( Instant.now() )
+                .createdBy( "SYSTEM" )
                 .build();
     }
 }
