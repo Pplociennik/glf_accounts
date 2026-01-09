@@ -1,9 +1,13 @@
 package com.goaleaf.accounts.controller.auth;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
+import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
+import com.goaleaf.accounts.data.dto.response.AuthenticationResponseDto;
+import com.goaleaf.accounts.data.dto.response.AuthenticationResponseUserDataDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
+import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.AuthenticationService;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
@@ -35,6 +39,12 @@ class AuthenticationController {
     private AuthenticationService authenticationService;
 
     /**
+     * A service responsible for managing user account operations, including
+     * account creation, updates, deletions, and retrieval of user account details.
+     */
+    private AccountService accountService;
+
+    /**
      * Registers a new user account using the provided registration request data.
      *
      * @param aRegistrationRequestDto
@@ -49,6 +59,9 @@ class AuthenticationController {
         log.debug( "Registering new user account {}", aRegistrationRequestDto );
         authenticationService.registerUserAccount( aRegistrationRequestDto );
         log.debug( "Registered new user account {}", aRegistrationRequestDto );
+        EmailConfirmationLinkRequestDto emailConfirmationLinkRequestDto = new EmailConfirmationLinkRequestDto();
+        emailConfirmationLinkRequestDto.setEmail( aRegistrationRequestDto.getEmail() );
+        accountService.requestEmailAddressVerificationMessage( emailConfirmationLinkRequestDto );
         return ResponseEntity
                 .status( HttpStatus.CREATED )
                 .body(
@@ -68,17 +81,20 @@ class AuthenticationController {
      */
     @PostMapping( path = "/login" )
     @Transactional
-    ResponseEntity< ResponseDto > authenticateUserAccount( @NonNull @RequestBody AuthenticationRequestDto authenticationRequestDto ) {
+    ResponseEntity< ResponseDto< AuthenticationResponseUserDataDto > > authenticateUserAccount( @NonNull @RequestBody AuthenticationRequestDto authenticationRequestDto ) {
         requireNonNull( authenticationRequestDto );
         log.debug( "Authenticating user account {}", authenticationRequestDto );
-        AuthenticationTokenDto authenticationTokenDto = authenticationService.authenticateUserAccount( authenticationRequestDto );
-        log.debug( "Authenticated user account {}", authenticationTokenDto );
+        AuthenticationResponseDto response = authenticationService.authenticateUserAccount( authenticationRequestDto );
+        AuthenticationTokenDto tokenData = response.getToken();
+        AuthenticationResponseUserDataDto userData = response.getUserData();
+        log.debug( "Authenticated user account {}", response );
         return ResponseEntity
                 .status( HttpStatus.ACCEPTED )
                 .body(
-                        ResponseDto.builder()
+                        ResponseDto.< AuthenticationResponseUserDataDto >builder()
                                 .withStatusInfo( "200", "User authenticated successfully." )
-                                .withUserAccessToken( true, authenticationTokenDto.getAccessToken() )
+                                .withUserAccessToken( true, tokenData.getAccessToken(), tokenData.getExpiresIn() )
+                                .withResponseData( userData )
                                 .build()
                 );
     }
@@ -183,7 +199,7 @@ class AuthenticationController {
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Session terminated successfully." )
                                 // Method .withUserAccessToken adds token info only if the first argument is true.
-                                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken )
+                                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
                                 .build()
                 );
     }

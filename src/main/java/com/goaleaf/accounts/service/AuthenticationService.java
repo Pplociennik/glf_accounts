@@ -2,6 +2,7 @@ package com.goaleaf.accounts.service;
 
 import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
+import com.goaleaf.accounts.data.dto.response.AuthenticationResponseDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
 import org.springframework.lang.NonNull;
@@ -26,10 +27,10 @@ public interface AuthenticationService {
      *
      * @param aDto
      *         the data transfer object containing the user's credentials necessary for authentication.
-     * @return an {@code AuthenticationTokenDto} containing the authentication details, such as access token,
+     * @return an {@code AuthenticationResponseDto} containing the authentication details, such as username, access token,
      * refresh token, token type, and expiration information.
      */
-    AuthenticationTokenDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto );
+    AuthenticationResponseDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto );
 
     /**
      * Terminates all active sessions associated with the user identified by the provided access token.
