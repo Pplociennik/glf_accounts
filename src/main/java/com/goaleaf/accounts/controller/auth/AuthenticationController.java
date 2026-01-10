@@ -89,7 +89,7 @@ class AuthenticationController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "User authenticated successfully." )
-                                .withUserAccessToken( true, authenticationTokenDto.getAccessToken() )
+                                .withUserAccessToken( true, authenticationTokenDto.getAccessToken(), authenticationTokenDto.getExpiresIn() )
                                 .build()
                 );
     }
@@ -194,7 +194,7 @@ class AuthenticationController {
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Session terminated successfully." )
                                 // Method .withUserAccessToken adds token info only if the first argument is true.
-                                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken )
+                                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
                                 .build()
                 );
     }

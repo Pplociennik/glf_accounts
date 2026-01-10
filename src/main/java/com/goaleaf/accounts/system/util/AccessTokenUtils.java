@@ -118,6 +118,28 @@ public final class AccessTokenUtils {
         return decodedJWT.getExpiresAtAsInstant();
     }
 
+    /**
+     * Retrieves the number of seconds in which the token expires from now.
+     *
+     * @param aAccessToken
+     *         a non-null string representing the JWT access token; must not be null
+     * @return an {@link  Integer} representing the number of seconds being the live length of the token
+     *
+     * @throws NullPointerException
+     *         if the provided access token is null
+     */
+    public static Integer getExpiresIn( @NonNull String aAccessToken ) {
+        requireNonNull( aAccessToken );
+
+        Instant now = Instant.now();
+        long epochNow = now.getEpochSecond();
+
+        Instant expirationTime = getExpirationTime( aAccessToken );
+        long expirationEpoch = expirationTime.getEpochSecond();
+
+        return ( int ) ( expirationEpoch - epochNow );
+    }
+
     private static String getTokenWithoutPrefix( String aAccessToken ) {
         return aAccessToken.split( " " )[ 1 ];
     }

@@ -3,6 +3,7 @@ package com.goaleaf.accounts.controller.session;
 import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.data.dto.response.UserSessionResponseDto;
 import com.goaleaf.accounts.service.UserSessionDetailsService;
+import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -70,7 +71,7 @@ class UserSessionDetailsController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "All user sessions retrieved successfully." )
-                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken )
+                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
                                 .withResponseData( allUserSessionDetails )
                                 .build()
                 );
