@@ -5,6 +5,7 @@ import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordResetRequestDto;
 import com.goaleaf.accounts.service.AccountService;
+import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -80,7 +81,7 @@ class AccountManagementController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Email address confirmed successfully." )
-                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken )
+                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
                                 .build()
                 );
     }
@@ -133,7 +134,7 @@ class AccountManagementController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Password changed successfully." )
-                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken )
+                                .withUserAccessToken( aTokenRefreshed, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
                                 .build()
                 );
 

@@ -1,7 +1,8 @@
 package com.goaleaf.accounts.data.map;
 
-import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
+import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
 import com.goaleaf.accounts.data.dto.keycloak.AccountDto;
+import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
 import com.goaleaf.accounts.persistence.entity.UserDetails;
 
 /**
@@ -56,16 +57,18 @@ public class UserDetailsMapper {
      *
      * @param aAccountDto
      *         a dto to be mapped.
+     * @param aRequestDto
+     *         a data transfer object used for registration
      * @return an object of the type {@link UserDetails} or null if th parameter is null.
      */
-    public static UserDetailsDto mapToDto( AccountDto aAccountDto ) {
+    public static UserDetailsDto mapToDto( AccountDto aAccountDto, RegistrationRequestDto aRequestDto ) {
         if ( aAccountDto == null ) {
             return null;
         }
 
         return UserDetailsDto.builder()
                 .userId( aAccountDto.getId() )
-                .userName( aAccountDto.getUsername() )
+                .userName( aRequestDto.getUsername() )
                 .emailAddress( aAccountDto.getEmail() )
                 .build();
     }

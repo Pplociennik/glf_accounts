@@ -5,6 +5,8 @@ import com.github.pplociennik.commons.service.SystemPropertiesReaderService;
 import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
 import com.goaleaf.accounts.data.dto.keycloak.AccountDto;
+import com.goaleaf.accounts.data.dto.response.AuthenticationResponseDto;
+import com.goaleaf.accounts.data.dto.response.AuthenticationResponseUserDataDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.data.dto.response.KeycloakErrorResponseDto;
 import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
@@ -129,7 +131,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
      *
      * @param aDto
      *         the authentication request details containing username and password; must not be null
-     * @return an {@link AuthenticationTokenDto} containing the authentication token details for the authenticated user
+     * @return an {@link AuthenticationResponseDto} containing the authentication token details for the authenticated user
      *
      * @throws NullPointerException
      *         if aAccessToken or aDto is null
@@ -137,7 +139,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
      *         if authentication fails due to any reason
      */
     @Override
-    public AuthenticationTokenDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto ) {
+    public AuthenticationResponseDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto ) {
         requireNonNull( aDto );
 
         String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
@@ -153,7 +155,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                             "grant_type=password"
                                     + "&client_id=" + clientID
                                     + "&client_secret=" + clientSecret
-                                    + "&username=" + aDto.getUsername()
+                                    + "&username=" + aDto.getEmail()
                                     + "&password=" + aDto.getPassword()
                     )
                     .retrieve()
@@ -163,11 +165,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
         } catch ( WebClientResponseException aE ) {
             KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
             requireNonNull( errorResponse );
-            throw new AuthenticationFailedException( AccountsExcTranslationKey.AUTHENTICATION_FAILED, aDto.getUsername(), errorResponse.getErrorDescription() );
+            throw new AuthenticationFailedException( AccountsExcTranslationKey.AUTHENTICATION_FAILED, aDto.getEmail(), errorResponse.getErrorDescription() );
         }
 
         userSessionDetailsService.createUserSessionDetails( aDto, requireNonNull( authenticationToken ) );
-        return authenticationToken;
+        UserDetailsDto userDetails = userDetailsService.findUserDetailsByEmail( aDto.getEmail() );
+        AuthenticationResponseUserDataDto userDataDto = new AuthenticationResponseUserDataDto( userDetails.getUserName() );
+        return new AuthenticationResponseDto( userDataDto, authenticationToken );
     }
 
     /**
@@ -291,7 +295,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         requireNonNull( aDto );
         List< AccountDto > retrievedAccounts = accountService.getAccountByEmailAddress( aAccessToken, aDto.getEmail() );
         AccountDto accountDto = retrievedAccounts.get( 0 );
-        UserDetailsDto userDetailsDto = UserDetailsMapper.mapToDto( accountDto );
+        UserDetailsDto userDetailsDto = UserDetailsMapper.mapToDto( accountDto, aDto );
         return userDetailsService.createUserDetails( userDetailsDto );
     }
 

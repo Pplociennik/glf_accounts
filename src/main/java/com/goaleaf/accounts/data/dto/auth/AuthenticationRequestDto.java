@@ -28,10 +28,10 @@ import lombok.NoArgsConstructor;
 public class AuthenticationRequestDto extends BaseAbstractExtendableDto {
 
     @Schema(
-            description = "The username associated with the user's account. This is used as an identifier during the authentication process.",
+            description = "The email address associated with the user's account. This is used as an identifier during the authentication process.",
             example = "TestUsername"
     )
-    private String username;
+    private String email;
 
     @Schema(
             description = "The password associated with the user's account. This is required for verifying access and completing the authentication process.",
@@ -48,7 +48,7 @@ public class AuthenticationRequestDto extends BaseAbstractExtendableDto {
     @Override
     public String toString() {
         return "AuthenticationRequestDto{" +
-                "username='" + username + '\'' +
+                "username='" + email + '\'' +
                 ", password=********'" + '\'' +
                 '}';
     }
