@@ -16,6 +16,8 @@ import java.util.Optional;
  * authentication tokens.
  *
  * @author Created by: Pplociennik at 01.04.2025 20:32
+ * @since 1.0
+ * @see UserSessionDetails
  */
 public interface UserSessionDetailsService {
 
@@ -89,4 +91,16 @@ public interface UserSessionDetailsService {
      *         the unique identifier of the session to be deleted; must not be null.
      */
     void deleteSessionDetails( @NonNull String aSessionId );
+
+    /**
+     * Updates the specified user session details in the system.
+     *
+     * @param aSessionDetails
+     *         the {@code UserSessionDetails} object containing the updated session information;
+     *         must not be null.
+     * @param aAuthenticationToken
+     *         the {@code AuthenticationTokenDto} containing the new authentication token details
+     *         to update the session with; must not be null.
+     */
+    void updateSessionDetails( @NonNull UserSessionDetails aSessionDetails, @NonNull AuthenticationTokenDto aAuthenticationToken );
 }

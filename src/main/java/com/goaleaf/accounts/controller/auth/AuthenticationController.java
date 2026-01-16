@@ -111,14 +111,16 @@ class AuthenticationController {
      */
     @PostMapping( path = "/session/refresh" )
     @Transactional
-    ResponseEntity< AuthenticationTokenDto > refreshUserAccessToken( @NonNull @RequestHeader( value = "User-Token" ) String aUserAccessToken ) {
+    ResponseEntity< ResponseDto< AuthenticationTokenDto > > refreshUserAccessToken( @NonNull @RequestHeader( value = "User-Token" ) String aUserAccessToken ) {
         requireNonNull( aUserAccessToken );
         log.debug( "Refreshing user access token {}", aUserAccessToken );
         AuthenticationTokenDto authenticationTokenDto = authenticationService.refreshUserSession( aUserAccessToken );
         log.debug( "Refreshed user access token {}", authenticationTokenDto );
         return ResponseEntity
                 .status( HttpStatus.OK )
-                .body( authenticationTokenDto );
+                .body( ResponseDto.< AuthenticationTokenDto >builder()
+                        .withStatusInfo( "200", "User access token refreshed successfully." )
+                        .withUserAccessToken( true, authenticationTokenDto.getAccessToken(), authenticationTokenDto.getExpiresIn() ).build() );
     }
 
     /**
