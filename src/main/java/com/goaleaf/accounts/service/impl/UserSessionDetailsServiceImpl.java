@@ -42,7 +42,15 @@ import static com.goaleaf.accounts.system.util.token.TokenValidationStrategy.OFF
 import static java.util.Objects.requireNonNull;
 
 /**
+ * Implementation of the {@link UserSessionDetailsService} interface for managing user session details.
+ *
+ * <p>Provides functionality for creating, retrieving, updating, and deleting user sessions,
+ * including integration with Keycloak for session validation and token management.</p>
+ *
  * @author Created by: Pplociennik at 01.04.2025 20:37
+ * @since 1.0
+ * @see UserSessionDetailsService
+ * @see UserSessionDetailsRepository
  */
 @Log4j2
 @Service
@@ -235,10 +243,45 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
         userSessionDetailsRepository.delete( sessionDetails );
     }
 
+    /**
+     * Updates the specified user session details in the system.
+     *
+     * @param aSessionDetails
+     *         the {@code UserSessionDetails} object containing the updated session information;
+     *         must not be null.
+     * @param aAuthenticationToken
+     *         the {@code AuthenticationTokenDto} containing the new authentication token details
+     *         to update the session with; must not be null.
+     */
+    @Override
+    public void updateSessionDetails( @NonNull UserSessionDetails aSessionDetails, @NonNull AuthenticationTokenDto aAuthenticationToken ) {
+        aSessionDetails.setRefreshToken( aAuthenticationToken.getRefreshToken() );
+        userSessionDetailsRepository.save( aSessionDetails );
+    }
+
+    /**
+     * Validates the provided token using the specified validation strategy.
+     *
+     * @param aStrategy
+     *         the validation strategy to use for token validation; must not be null.
+     * @param aToken
+     *         the access token to validate; must not be null.
+     * @return {@code true} if the token is valid; {@code false} otherwise.
+     */
     private boolean validateToken( @NonNull AccessTokenValidationStrategy aStrategy, @NonNull String aToken ) {
         return aStrategy.validateAccessToken( aToken );
     }
 
+    /**
+     * Creates a list of user session response DTOs by combining Keycloak session representations
+     * with locally stored session details.
+     *
+     * @param aUserId
+     *         the unique identifier of the user; must not be null.
+     * @param aKeycloakSessionRepresentations
+     *         the list of session representations retrieved from Keycloak; must not be null.
+     * @return a list of {@code UserSessionResponseDto} objects containing combined session information.
+     */
     private List< UserSessionResponseDto > createDetailsResponses( @NonNull String aUserId, @NonNull List< UserSessionRepresentationDto > aKeycloakSessionRepresentations ) {
         requireNonNull( aUserId );
         requireNonNull( aKeycloakSessionRepresentations );
@@ -249,6 +292,18 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
                 .collect( Collectors.toList() );
     }
 
+    /**
+     * Maps a Keycloak session representation to a user session response DTO by combining
+     * Keycloak data with local session details.
+     *
+     * @param aKeycloakRepresentation
+     *         the Keycloak session representation containing session metadata.
+     * @param aDetailsList
+     *         the list of local session details to search for matching session information.
+     * @return a {@code UserSessionResponseDto} containing combined session information.
+     * @throws IllegalStateException
+     *         if no matching local session details are found for the Keycloak session.
+     */
     private UserSessionResponseDto mapToResponseDto( UserSessionRepresentationDto aKeycloakRepresentation, List< UserSessionDetails > aDetailsList ) {
         String sessionId = aKeycloakRepresentation.getId();
         UserSessionDetails details = findDetails( aDetailsList, sessionId );
@@ -263,6 +318,17 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
                 .build();
     }
 
+    /**
+     * Finds the session details matching the specified session ID from the provided list.
+     *
+     * @param aDetailsList
+     *         the list of session details to search through.
+     * @param aSessionId
+     *         the unique identifier of the session to find.
+     * @return the {@code UserSessionDetails} matching the given session ID.
+     * @throws IllegalStateException
+     *         if no session details are found for the given session ID.
+     */
     private UserSessionDetails findDetails( List< UserSessionDetails > aDetailsList, String aSessionId ) {
         return aDetailsList.stream()
                 .filter( details -> details.getSessionId().equals( aSessionId ) )
@@ -270,6 +336,19 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
                 .orElseThrow( () -> new IllegalStateException( "No such details found" ) );
     }
 
+    /**
+     * Creates a new {@code UserSessionDetails} entity from the provided authentication and session information.
+     *
+     * @param aAuthenticationToken
+     *         the authentication token containing the refresh token.
+     * @param aUserID
+     *         the unique identifier of the authenticated user.
+     * @param aDetails
+     *         the authentication details containing location and device information.
+     * @param aSessionID
+     *         the unique identifier for the session.
+     * @return a new {@code UserSessionDetails} entity populated with the provided data.
+     */
     private UserSessionDetails createUserSessionDetails( AuthenticationTokenDto aAuthenticationToken, String aUserID, AuthenticationDetailsDto aDetails, String aSessionID ) {
         return UserSessionDetails.builder()
                 .authenticatedUserId( aUserID )

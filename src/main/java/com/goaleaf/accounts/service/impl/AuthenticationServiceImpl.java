@@ -11,7 +11,6 @@ import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.data.dto.response.KeycloakErrorResponseDto;
 import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
 import com.goaleaf.accounts.data.map.UserDetailsMapper;
-import com.goaleaf.accounts.data.map.UserSessionDetailsMapper;
 import com.goaleaf.accounts.persistence.entity.UserSessionDetails;
 import com.goaleaf.accounts.persistence.repository.UserSessionDetailsRepository;
 import com.goaleaf.accounts.service.*;
@@ -242,8 +241,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         UserSessionDetails sessionDetails = getMandatoryValue( userSessionDetailsRepository.findBySessionId( sessionId ) );
 
         AuthenticationTokenDto refreshedToken = keycloakConnectionService.sendRefreshTokenRequest( sessionDetails.getRefreshToken() );
-        userSessionDetailsService.deleteSessionDetails( sessionDetails );
-        userSessionDetailsService.createUserSessionDetails( UserSessionDetailsMapper.mapToDto( sessionDetails ), refreshedToken );
+        userSessionDetailsService.updateSessionDetails( sessionDetails, refreshedToken );
         return refreshedToken;
     }
 
@@ -288,6 +286,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             throw new KeycloakActionRequestFailedException( CommonsResExcMsgTranslationKey.UNEXPECTED_EXCEPTION, errorResponse.getErrorDescription() );
         }
 
+        userSessionDetailsService.deleteSessionDetails( aSessionId );
         return true;
     }
 
