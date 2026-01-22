@@ -1,4 +1,4 @@
-package com.goaleaf.accounts.controller.account;
+package com.goaleaf.accounts.controller;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
@@ -51,7 +51,7 @@ class AccountManagementController {
     ResponseEntity< ResponseDto > requestEmailAddressVerification( @NonNull @RequestBody EmailConfirmationLinkRequestDto aRequestDto ) {
         requireNonNull( aRequestDto );
         log.info( "Requesting email address verification." );
-        accountService.requestEmailAddressVerificationMessage( aRequestDto );
+        accountService.requestEmailAddressVerificationMessage( aRequestDto.getEmail() );
         log.info( "Message with email confirmation link has been sent." );
         return ResponseEntity
                 .status( HttpStatus.OK )

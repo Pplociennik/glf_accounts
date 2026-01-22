@@ -1,9 +1,11 @@
-package com.goaleaf.accounts.controller;
+package com.goaleaf.accounts.controller.advice;
 
 import com.github.pplociennik.commons.dto.ErrorResponseDto;
+import com.github.pplociennik.commons.exc.BaseRuntimeException;
 import com.github.pplociennik.commons.exc.GlobalExceptionHandler;
 import com.github.pplociennik.commons.exc.validation.ValidationException;
 import com.github.pplociennik.commons.service.TimeService;
+import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AuthenticationFailedException;
 import com.goaleaf.accounts.system.exc.auth.RegistrationFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakActionRequestFailedException;
@@ -19,6 +21,11 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.WebRequest;
+
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.goaleaf.accounts.system.client.AuthClientActionFlags.VERIFY_USER_EMAIL;
 
 /**
  * Provides centralized exception handling.
@@ -133,14 +140,19 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
     @ExceptionHandler( ValidationException.class )
     public ResponseEntity< ErrorResponseDto > handleValidationException( ValidationException aException,
                                                                          WebRequest aWebRequest ) {
+        String message = Stream.of( aException.getSuppressed() )
+                .map( BaseRuntimeException.class::cast )
+                .map( BaseRuntimeException::getMessage )
+                .collect( Collectors.joining( ",\n" ) );
+
         ErrorResponseDto errorResponseDTO = new ErrorResponseDto(
                 aWebRequest.getDescription( false ),
                 HttpStatus.BAD_REQUEST,
-                aException.getLocalizedMessage(),
+                message,
                 timeService.getCurrentSystemDateTime()
         );
 
-        log.error( aException.getLocalizedMessage(), aException );
+        log.error( message, aException );
 
         return new ResponseEntity<>( errorResponseDTO, HttpStatus.BAD_REQUEST );
     }
@@ -241,6 +253,41 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
         log.error( aException.getLocalizedMessage(), aException );
 
         return new ResponseEntity<>( errorResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR );
+    }
+
+    /**
+     * Handles exceptions of type {@link AccountNotVerifiedException} that occur when an unverified user
+     * attempts to log into the system.
+     * <p>
+     * This method captures the {@link AccountNotVerifiedException}, constructs an {@link ErrorResponseDto}
+     * containing the error details, and returns it in a {@link ResponseEntity}. The response includes the
+     * description of the failed request, the HTTP status code of {@code FORBIDDEN (403)}, a localized error
+     * message, and the timestamp of occurrence.
+     *
+     * @param aException
+     *         The exception representing the error caused by an account not being verified. It contains details
+     *         about the issue that triggered the exception.
+     * @param aWebRequest
+     *         The web request during which the exception occurred. This provides contextual information about
+     *         the HTTP request for debugging and error identification purposes.
+     * @return A {@link ResponseEntity} containing an {@link ErrorResponseDto} with details about the error
+     * and an HTTP status code of {@code FORBIDDEN (403)}.
+     */
+    @ExceptionHandler( AccountNotVerifiedException.class )
+    public ResponseEntity< ErrorResponseDto > handleAccountNotVerifiedException( AccountNotVerifiedException aException,
+                                                                                 WebRequest aWebRequest ) {
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.builder(
+                        aWebRequest.getDescription( false ),
+                        HttpStatus.FORBIDDEN,
+                        aException.getLocalizedMessage(),
+                        timeService.getCurrentSystemDateTime() )
+                .withClientActionFlag( VERIFY_USER_EMAIL )
+                .withResponseData( aException.getEmailAddress() )
+                .build();
+
+        log.error( aException.getLocalizedMessage(), aException );
+
+        return new ResponseEntity<>( errorResponseDto, HttpStatus.FORBIDDEN );
     }
 
     // #################################################################################################################

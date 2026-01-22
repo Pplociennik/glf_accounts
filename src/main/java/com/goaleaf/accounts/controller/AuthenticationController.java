@@ -1,7 +1,6 @@
-package com.goaleaf.accounts.controller.auth;
+package com.goaleaf.accounts.controller;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
-import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationResponseDto;
@@ -59,9 +58,7 @@ class AuthenticationController {
         log.debug( "Registering new user account {}", aRegistrationRequestDto );
         authenticationService.registerUserAccount( aRegistrationRequestDto );
         log.debug( "Registered new user account {}", aRegistrationRequestDto );
-        EmailConfirmationLinkRequestDto emailConfirmationLinkRequestDto = new EmailConfirmationLinkRequestDto();
-        emailConfirmationLinkRequestDto.setEmail( aRegistrationRequestDto.getEmail() );
-        accountService.requestEmailAddressVerificationMessage( emailConfirmationLinkRequestDto );
+        accountService.requestEmailAddressVerificationMessage( aRegistrationRequestDto.getEmail() );
         return ResponseEntity
                 .status( HttpStatus.CREATED )
                 .body(

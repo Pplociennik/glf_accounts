@@ -52,6 +52,11 @@ public enum AccountsExcTranslationKey implements TranslationKey {
      */
     SESSION_EXPIRED,
 
+    /**
+     * Your account hasn't been verified yet!
+     */
+    ACCOUNT_NOT_VERIFIED,
+
     ;
 
     public static final String RESOURCE_BUNDLE_NAME = "lang/AccountsExcTranslationKey";

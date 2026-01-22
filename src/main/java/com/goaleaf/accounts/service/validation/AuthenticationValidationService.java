@@ -1,7 +1,9 @@
 package com.goaleaf.accounts.service.validation;
 
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
+import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
+import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import lombok.NonNull;
 
 /**
