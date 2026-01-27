@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.experimental.SuperBuilder;
 
 /**
  * A data transfer object representing data of the {@link UserDetails} entity.
@@ -48,5 +47,6 @@ public class UserDetailsDto extends BaseAbstractExtendableDto {
             description = "The description of the user.",
             example = "Hi, this is the test user description." )
     private String description;
+
 
 }

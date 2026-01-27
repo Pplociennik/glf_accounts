@@ -2,7 +2,6 @@ package com.goaleaf.accounts.service.impl;
 
 import com.github.pplociennik.commons.lang.CommonsResExcMsgTranslationKey;
 import com.github.pplociennik.commons.service.SystemPropertiesReaderService;
-import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordResetRequestDto;
 import com.goaleaf.accounts.data.dto.keycloak.AccountDto;
@@ -12,8 +11,10 @@ import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.KeycloakServiceConnectionService;
 import com.goaleaf.accounts.service.UserDetailsService;
 import com.goaleaf.accounts.service.validation.AuthenticationValidationService;
+import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakActionRequestFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakResourceRequestFailedException;
+import com.goaleaf.accounts.system.lang.AccountsExcTranslationKey;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import com.goaleaf.accounts.system.util.KeycloakUrlTemplates;
 import lombok.AllArgsConstructor;
@@ -76,29 +77,24 @@ class AccountServiceImpl implements AccountService {
     private final UserDetailsService userDetailsService;
 
     /**
-     * Retrieves a list of accounts associated with a given email address.
+     * Retrieves an account's details using the associated email address.
      *
      * @param aAccessToken
-     *         a non-null string representing the authorization token to authenticate the
-     *         request; must not be null.
+     *         the access token used for authentication, must not be null
      * @param aEmailAddress
-     *         a non-null string representing the email address used to look up the associated
-     *         accounts; must not be null.
-     * @return a list of AccountDto objects representing the accounts associated with the
-     * specified email address.
+     *         the email address of the account to retrieve, must not be null
+     * @return the {@code AccountDto} object containing the account details
      *
      * @throws KeycloakResourceRequestFailedException
-     *         when the resource request to keycloak failed for any reason
-     * @throws NullPointerException
-     *         if aEmailAddress is null.
+     *         if the request to the Keycloak server fails or the response contains an error
      */
-    public List< AccountDto > getAccountByEmailAddress( @NonNull String aAccessToken, @NonNull String aEmailAddress ) {
+    public AccountDto getAccountByEmailAddress( @NonNull String aAccessToken, @NonNull String aEmailAddress ) {
         requireNonNull( aEmailAddress );
         String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
         WebClient client = keycloakConnectionService.getAuthServiceConnectionWebClient( GET_LIST_OF_ACCOUNTS_TEMPLATE, realmName );
 
         try {
-            return client.get()
+            List< AccountDto > resultList = client.get()
                     .uri( uriBuilder -> uriBuilder
                             .queryParam( "email", aEmailAddress )
                             .build() )
@@ -107,6 +103,50 @@ class AccountServiceImpl implements AccountService {
                     .bodyToFlux( AccountDto.class )
                     .collectList()
                     .block();
+
+            return resultList.get( 0 );
+        } catch ( WebClientResponseException aE ) {
+            KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
+            requireNonNull( errorResponse );
+            throw new KeycloakResourceRequestFailedException( CommonsResExcMsgTranslationKey.UNEXPECTED_EXCEPTION, errorResponse.getErrorDescription() );
+        }
+    }
+
+    /**
+     * Retrieves an account by the provided email address.
+     * <p>
+     * This method communicates with an external Keycloak service to fetch account
+     * details associated with the specified email address. If an account with the
+     * given email address exists, the first matching account is returned. In case
+     * of an error during the request, an exception is thrown.
+     *
+     * @param aEmailAddress
+     *         the email address of the account to retrieve; must not be null
+     * @return the account details as an {@code AccountDto} object; never null
+     *
+     * @throws KeycloakResourceRequestFailedException
+     *         if there is an error during the request or the response contains an error
+     * @throws NullPointerException
+     *         if {@code aEmailAddress} is null or if the response error details are null
+     */
+    public AccountDto getAccountByEmailAddress( @NonNull String aEmailAddress ) {
+        requireNonNull( aEmailAddress );
+        String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
+        String clientAccessToken = keycloakConnectionService.getClientAccessToken();
+        WebClient client = keycloakConnectionService.getAuthServiceConnectionWebClient( GET_LIST_OF_ACCOUNTS_TEMPLATE, realmName );
+
+        try {
+            List< AccountDto > resultList = client.get()
+                    .uri( uriBuilder -> uriBuilder
+                            .queryParam( "email", aEmailAddress )
+                            .build() )
+                    .header( "Authorization", clientAccessToken )
+                    .retrieve()
+                    .bodyToFlux( AccountDto.class )
+                    .collectList()
+                    .block();
+
+            return resultList.get( 0 );
         } catch ( WebClientResponseException aE ) {
             KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
             requireNonNull( errorResponse );
@@ -117,15 +157,15 @@ class AccountServiceImpl implements AccountService {
     /**
      * Sends an email address verification message to the user.
      *
-     * @param aRequestDto
-     *         a DTO being a representation of a request for sending a message with the email confirmation link
+     * @param aEmailAddress
+     *         an email address which will be confirmed.
      * @throws KeycloakActionRequestFailedException
      *         when the request to keycloak failed for any reason
      */
     @Override
-    public void requestEmailAddressVerificationMessage( EmailConfirmationLinkRequestDto aRequestDto ) {
-        requireNonNull( aRequestDto );
-        String userId = getUserId( aRequestDto );
+    public void requestEmailAddressVerificationMessage( @NonNull String aEmailAddress ) {
+        requireNonNull( aEmailAddress );
+        String userId = getUserId( aEmailAddress );
         String clientAccessToken = keycloakConnectionService.getClientAccessToken();
         String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
         String clientRedirectionUri = systemPropertiesReaderService.readProperty( CLIENT_URI );
@@ -264,14 +304,30 @@ class AccountServiceImpl implements AccountService {
     }
 
     /**
+     * Checks if the email associated with the provided email address is verified.
+     * Throws an AccountNotVerifiedException if the email is not verified.
+     *
+     * @param aEmailAddress
+     *         the email address to check for verification status, must not be null
+     */
+    @Override
+    public void checkIfEmailVerified( @NonNull String aEmailAddress ) {
+        AccountDto accountDto = getAccountByEmailAddress( aEmailAddress );
+
+        if ( !accountDto.getEmailVerified() ) {
+            throw new AccountNotVerifiedException( aEmailAddress, AccountsExcTranslationKey.ACCOUNT_NOT_VERIFIED );
+        }
+    }
+
+    /**
      * Retrieves the user ID associated with the given email confirmation link request.
      *
-     * @param aRequestDto
-     *         the email confirmation link request containing the email information
+     * @param aEmailAddress
+     *         the email address
      * @return the user ID associated with the provided email address
      */
-    private String getUserId( EmailConfirmationLinkRequestDto aRequestDto ) {
-        UserDetailsDto details = userDetailsService.findUserDetailsByEmail( aRequestDto.getEmail() );
+    private String getUserId( String aEmailAddress ) {
+        UserDetailsDto details = userDetailsService.findUserDetailsByEmail( aEmailAddress );
         return details.getUserId();
     }
 }

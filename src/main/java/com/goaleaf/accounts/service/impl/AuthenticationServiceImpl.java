@@ -15,6 +15,7 @@ import com.goaleaf.accounts.persistence.entity.UserSessionDetails;
 import com.goaleaf.accounts.persistence.repository.UserSessionDetailsRepository;
 import com.goaleaf.accounts.service.*;
 import com.goaleaf.accounts.service.validation.AuthenticationValidationService;
+import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AuthenticationFailedException;
 import com.goaleaf.accounts.system.exc.auth.RegistrationFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakActionRequestFailedException;
@@ -29,8 +30,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-
-import java.util.List;
 
 import static com.github.pplociennik.commons.utility.OptionalUtils.getMandatoryValue;
 import static com.goaleaf.accounts.system.properties.AccountsSystemProperties.*;
@@ -126,20 +125,26 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     /**
-     * Authenticates a user account using the provided access token and authentication request details.
+     * Authenticates a user account and returns an authentication response containing
+     * user details and authentication tokens. This method communicates with a Keycloak
+     * authentication server and performs required verifications.
      *
      * @param aDto
-     *         the authentication request details containing username and password; must not be null
-     * @return an {@link AuthenticationResponseDto} containing the authentication token details for the authenticated user
+     *         the data transfer object containing the user's email and password for authentication
+     * @return an AuthenticationResponseDto containing the authenticated user's details and authentication token
      *
      * @throws NullPointerException
-     *         if aAccessToken or aDto is null
+     *         if the provided authentication request DTO is null
      * @throws AuthenticationFailedException
-     *         if authentication fails due to any reason
+     *         if the authentication process fails or invalid credentials are provided
+     * @throws AccountNotVerifiedException
+     *         if the email address related to the account hasn't been verified yet
      */
     @Override
     public AuthenticationResponseDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto ) {
         requireNonNull( aDto );
+
+        accountService.checkIfEmailVerified( aDto.getEmail() );
 
         String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
         String clientID = systemPropertiesReaderService.readProperty( KEYCLOAK_CLIENT_ID );
@@ -292,9 +297,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private UserDetailsDto createInnerUserDetails( @NonNull String aAccessToken, @NonNull RegistrationRequestDto aDto ) {
         requireNonNull( aDto );
-        List< AccountDto > retrievedAccounts = accountService.getAccountByEmailAddress( aAccessToken, aDto.getEmail() );
-        AccountDto accountDto = retrievedAccounts.get( 0 );
-        UserDetailsDto userDetailsDto = UserDetailsMapper.mapToDto( accountDto, aDto );
+        AccountDto retrievedAccount = accountService.getAccountByEmailAddress( aAccessToken, aDto.getEmail() );
+        UserDetailsDto userDetailsDto = UserDetailsMapper.mapToDto( retrievedAccount, aDto );
         return userDetailsService.createUserDetails( userDetailsDto );
     }
 

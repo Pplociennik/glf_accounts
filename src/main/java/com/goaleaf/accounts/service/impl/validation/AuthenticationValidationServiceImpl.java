@@ -2,10 +2,14 @@ package com.goaleaf.accounts.service.impl.validation;
 
 import com.github.pplociennik.commons.validation.Validator;
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
+import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.data.dto.auth.CredentialsDto;
 import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
+import com.goaleaf.accounts.data.dto.keycloak.AccountDto;
 import com.goaleaf.accounts.persistence.repository.UserDetailsRepository;
+import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.validation.AuthenticationValidationService;
+import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.goaleaf.accounts.controller.session;
+package com.goaleaf.accounts.controller;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.data.dto.response.UserSessionResponseDto;

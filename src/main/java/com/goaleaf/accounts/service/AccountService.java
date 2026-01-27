@@ -1,12 +1,9 @@
 package com.goaleaf.accounts.service;
 
-import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordResetRequestDto;
 import com.goaleaf.accounts.data.dto.keycloak.AccountDto;
 import lombok.NonNull;
-
-import java.util.List;
 
 /**
  * Service interface for managing accounts within the application.
@@ -24,29 +21,46 @@ import java.util.List;
 public interface AccountService {
 
     /**
-     * Retrieves a list of accounts associated with the provided email address.
-     * This method performs user account lookups using the given access token and
-     * queries the external system or internal database for matching account details.
+     * Retrieves the account details associated with the specified email address by communicating
+     * with an external authentication provider. The access token is required for authorization purposes.
      *
      * @param aAccessToken
-     *         the authentication token used for authorization purposes when making the request;
-     *         must not be null.
+     *         the access token for authorizing the request. Must not be null.
      * @param aEmailAddress
-     *         the email address used to search for accounts; must not be null.
-     * @return a list of {@link AccountDto} containing account details associated with the specified email address;
-     * may return an empty list if no matching accounts are found.
+     *         the email address of the account to retrieve. Must not be null.
+     * @return an {@code AccountDto} object containing the account details associated with the provided email address.
+     *
+     * @throws NullPointerException
+     *         if any of the input parameters are null.
+     * @throws IllegalArgumentException
+     *         if the provided email address is invalid or empty.
      */
-    List< AccountDto > getAccountByEmailAddress( @NonNull String aAccessToken, @NonNull String aEmailAddress );
+    AccountDto getAccountByEmailAddress( @NonNull String aAccessToken, @NonNull String aEmailAddress );
+
+    /**
+     * Retrieves the account details associated with the specified email address.
+     *
+     * @param aEmailAddress
+     *         the email address of the account to retrieve. Must not be null.
+     * @return an {@code AccountDto} object containing the details of the account
+     * associated with the provided email address.
+     *
+     * @throws NullPointerException
+     *         if the provided email address is null.
+     * @throws IllegalArgumentException
+     *         if the provided email address is invalid or empty.
+     */
+    AccountDto getAccountByEmailAddress( @NonNull String aEmailAddress );
 
     /**
      * Sends an email address verification message to the user.
      * This method is typically used to trigger the process of verifying the user's email address
      * and ensures that the provided email address is valid and associated with the specified user account.
      *
-     * @param aRequestDto
-     *         a DTO being a representation of a request for sending a message with the email confirmation link
+     * @param aEmailAddress
+     *         an email address which will be confirmed.
      */
-    void requestEmailAddressVerificationMessage( EmailConfirmationLinkRequestDto aRequestDto );
+    void requestEmailAddressVerificationMessage( @NonNull String aEmailAddress );
 
     /**
      * Verifies a user's email address using a confirmation token. This method communicates with the external
@@ -80,5 +94,13 @@ public interface AccountService {
      *         the data transfer object containing the new password details; must not be null
      */
     void changeAccountPassword( @NonNull String aUserAccessToken, @NonNull PasswordChangingRequestDto aPasswordChangingRequestDto );
+
+    /**
+     * Checks if the email address associated with a user account has been verified.
+     *
+     * @param aEmailAddress
+     *         the email address to check for verification status. Must not be null.
+     */
+    void checkIfEmailVerified( @NonNull String aEmailAddress );
 
 }
