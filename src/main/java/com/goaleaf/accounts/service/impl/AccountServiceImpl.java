@@ -320,6 +320,41 @@ class AccountServiceImpl implements AccountService {
     }
 
     /**
+     * Deletes the account associated with the provided user access token.
+     * This method handles the account deletion process by interacting with the external
+     * authentication service. The access token must belong to an authorized user.
+     *
+     * @param aUserAccessToken
+     *         the access token of the user whose account is to be deleted. Must not be null.
+     * @throws NullPointerException
+     *         if the provided access token is null.
+     * @throws IllegalArgumentException
+     *         if the provided access token is invalid or empty.
+     */
+    @Override
+    public void deleteAccount( @NonNull String aUserAccessToken ) {
+        requireNonNull( aUserAccessToken );
+        String userId = AccessTokenUtils.getUserId( aUserAccessToken );
+        userDetailsService.deleteUserDetails( userId );
+
+        String realmName = systemPropertiesReaderService.readProperty( KEYCLOAK_REALM_NAME );
+
+        String clientAccessToken = keycloakConnectionService.getClientAccessToken();
+        WebClient client = keycloakConnectionService.getAuthServiceConnectionWebClient( DELETE_USER_TEMPLATE, realmName, userId );
+        try {
+            client.delete()
+                    .header( "Authorization", clientAccessToken )
+                    .retrieve()
+                    .toBodilessEntity()
+                    .block();
+        } catch ( WebClientResponseException aE ) {
+            KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
+            requireNonNull( errorResponse );
+            throw new KeycloakActionRequestFailedException( CommonsResExcMsgTranslationKey.UNEXPECTED_EXCEPTION, errorResponse.getErrorDescription() );
+        }
+    }
+
+    /**
      * Retrieves the user ID associated with the given email confirmation link request.
      *
      * @param aEmailAddress

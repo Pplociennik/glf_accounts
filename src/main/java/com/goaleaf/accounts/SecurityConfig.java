@@ -262,6 +262,22 @@ class SecurityConfig {
     }
 
     /**
+     * Configures security settings for the delete account endpoint.
+     * Allows unrestricted access to the "/api/accounts/delete" API endpoint.
+     *
+     * @param aHttp
+     *         the HttpSecurity to configure
+     * @return the configured HttpSecurity object
+     *
+     * @throws Exception
+     *         if an error occurs during configuration
+     */
+    private HttpSecurity configureDeleteAccount( HttpSecurity aHttp ) throws Exception {
+        aHttp.authorizeHttpRequests( auth -> auth.requestMatchers( "/api/accounts/delete" ).permitAll() );
+        return aHttp;
+    }
+
+    /**
      * Configures the token validation filter for specific endpoints.
      * Adds a custom filter to validate user tokens for protected endpoints.
      *
@@ -349,6 +365,7 @@ class SecurityConfig {
         configureEmailConfirmation( aHttp );
         configurePasswordChange( aHttp );
         configurePasswordReset( aHttp );
+        configureDeleteAccount( aHttp );
 
         // System API config
         configureActuatorEndpoint( aHttp );

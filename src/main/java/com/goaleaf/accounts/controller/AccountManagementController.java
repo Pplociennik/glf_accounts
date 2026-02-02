@@ -6,6 +6,7 @@ import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordResetRequestDto;
 import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -138,6 +139,33 @@ class AccountManagementController {
                                 .build()
                 );
 
+    }
+
+    /**
+     * Deletes a user's account based on the provided user access token. This operation is intended
+     * for authenticated users to permanently remove their account from the system.
+     * The access token is validated to ensure that the deletion request is authorized.
+     *
+     * @param aUserAccessToken
+     *         a non-null string representing the user's access token, provided as a request header.
+     *         It must not be empty and is required to identify and authenticate the user initiating the request.
+     * @return a ResponseEntity containing a ResponseDto with the status code and a message indicating
+     * the outcome of the account deletion request.
+     */
+    @DeleteMapping( "/delete" )
+    @Transactional( value = Transactional.TxType.REQUIRES_NEW )
+    ResponseEntity< ResponseDto > deleteAccount( @RequestHeader( value = "User-Token" ) String aUserAccessToken ) {
+        requireNonNull( aUserAccessToken );
+        log.info( "Deleting account." );
+        accountService.deleteAccount( aUserAccessToken );
+        log.info( "Account deleted successfully." );
+        return ResponseEntity
+                .status( HttpStatus.OK )
+                .body(
+                        ResponseDto.builder()
+                                .withStatusInfo( "200", "Account deleted successfully." )
+                                .build()
+                );
     }
 
 }
