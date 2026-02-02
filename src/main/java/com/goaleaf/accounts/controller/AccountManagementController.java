@@ -4,8 +4,13 @@ import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.data.dto.account.EmailConfirmationLinkRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordChangingRequestDto;
 import com.goaleaf.accounts.data.dto.account.PasswordResetRequestDto;
+import com.goaleaf.accounts.data.dto.auth.AuthenticationDetailsDto;
+import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.service.AccountService;
+import com.goaleaf.accounts.service.AuthenticationService;
+import com.goaleaf.accounts.system.client.AuthClientActionFlags;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
@@ -37,6 +42,15 @@ class AccountManagementController {
      * like validating user tokens, managing email confirmations, and updating account credentials.
      */
     private final AccountService accountService;
+
+    /**
+     * An instance of the {@link AuthenticationService} class used for authentication-related
+     * operations. This service handles tasks such as user login, token validation, and other
+     * authentication processes. It serves as a dependency in the
+     * {@code AccountManagementController}, enabling authentication functionalities required
+     * for account management actions.
+     */
+    private final AuthenticationService authenticationService;
 
     /**
      * Triggers an email verification process by sending an email confirmation link to the user.
@@ -127,17 +141,52 @@ class AccountManagementController {
     ResponseEntity< ResponseDto > changePassword( @RequestAttribute( value = "USER_ACCESS_TOKEN_REFRESHED" ) boolean aTokenRefreshed, @RequestHeader( value = "User-Token" ) String aUserAccessToken, @RequestBody @NonNull PasswordChangingRequestDto aPasswordChangingRequestDto ) {
         requireNonEmpty( aUserAccessToken );
         log.info( "Changing password requested." );
+
+        // First we need to ensure, user gave us the correct current password. We're authenticating the account by email and password. If the password is incorrect, the exception will be thrown
+        String userEmail = AccessTokenUtils.getUserEmail( aUserAccessToken );
+        AuthenticationRequestDto requestDto = new AuthenticationRequestDto( userEmail, aPasswordChangingRequestDto.getCurrentPassword(), new AuthenticationDetailsDto( "SYSTEM", "SYSTEM" ) );
+        authenticationService.authenticateUserAccount( requestDto );
         accountService.changeAccountPassword( aUserAccessToken, aPasswordChangingRequestDto );
         log.info( "Password changed successfully." );
+        log.info( "Terminating user sessions." );
+        authenticationService.terminateAllSessions( aUserAccessToken );
         return ResponseEntity
                 .status( HttpStatus.OK )
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Password changed successfully." )
                                 .withUserAccessToken( aTokenRefreshed, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
+                                .withClientActionFlag( AuthClientActionFlags.USER_PASSWORD_CHANGED )
                                 .build()
                 );
 
+    }
+
+    /**
+     * Deletes a user's account based on the provided user access token. This operation is intended
+     * for authenticated users to permanently remove their account from the system.
+     * The access token is validated to ensure that the deletion request is authorized.
+     *
+     * @param aUserAccessToken
+     *         a non-null string representing the user's access token, provided as a request header.
+     *         It must not be empty and is required to identify and authenticate the user initiating the request.
+     * @return a ResponseEntity containing a ResponseDto with the status code and a message indicating
+     * the outcome of the account deletion request.
+     */
+    @DeleteMapping( "/delete" )
+    @Transactional( value = Transactional.TxType.REQUIRES_NEW )
+    ResponseEntity< ResponseDto > deleteAccount( @RequestHeader( value = "User-Token" ) String aUserAccessToken ) {
+        requireNonNull( aUserAccessToken );
+        log.info( "Deleting account." );
+        accountService.deleteAccount( aUserAccessToken );
+        log.info( "Account deleted successfully." );
+        return ResponseEntity
+                .status( HttpStatus.OK )
+                .body(
+                        ResponseDto.builder()
+                                .withStatusInfo( "200", "Account deleted successfully." )
+                                .build()
+                );
     }
 
 }

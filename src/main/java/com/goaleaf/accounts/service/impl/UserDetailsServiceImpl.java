@@ -72,4 +72,16 @@ class UserDetailsServiceImpl implements UserDetailsService {
                 .map( UserDetailsMapper::mapToDto )
                 .orElseThrow( () -> new IllegalStateException( "Could not convert to " + UserDetailsDto.class.getSimpleName() ) );
     }
+
+    /**
+     * Deletes the user details associated with the specified user ID.
+     *
+     * @param aUserID
+     *         the ID of the user whose details are to be deleted. Must not be null or empty.
+     */
+    @Override
+    public void deleteUserDetails( @NonNull String aUserID ) {
+        requireNonNull( aUserID );
+        userDetailsRepository.deleteUserDetailsByUserId( aUserID );
+    }
 }

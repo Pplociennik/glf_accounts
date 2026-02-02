@@ -34,4 +34,11 @@ public interface UserDetailsService {
      */
     UserDetailsDto findUserDetailsByEmail( @NonNull String aEmail );
 
+    /**
+     * Deletes the user details associated with the specified user ID.
+     *
+     * @param aUserID
+     *         the ID of the user whose details are to be deleted. Must not be null or empty.
+     */
+    void deleteUserDetails( String aUserID );
 }

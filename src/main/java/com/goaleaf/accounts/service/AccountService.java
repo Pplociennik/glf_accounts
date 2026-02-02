@@ -103,4 +103,18 @@ public interface AccountService {
      */
     void checkIfEmailVerified( @NonNull String aEmailAddress );
 
+    /**
+     * Deletes the account associated with the provided user access token.
+     * This method handles the account deletion process by interacting with the external
+     * authentication service. The access token must belong to an authorized user.
+     *
+     * @param aUserAccessToken
+     *         the access token of the user whose account is to be deleted. Must not be null.
+     * @throws NullPointerException
+     *         if the provided access token is null.
+     * @throws IllegalArgumentException
+     *         if the provided access token is invalid or empty.
+     */
+    void deleteAccount( @NonNull String aUserAccessToken );
+
 }
