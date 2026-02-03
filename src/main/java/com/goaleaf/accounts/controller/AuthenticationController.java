@@ -8,6 +8,7 @@ import com.goaleaf.accounts.data.dto.response.AuthenticationResponseUserDataDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.AuthenticationService;
+import com.goaleaf.accounts.system.client.AuthClientActionFlags;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -16,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.Serializable;
 
 import static java.util.Objects.requireNonNull;
 
@@ -191,15 +194,21 @@ class AuthenticationController {
         authenticationService.terminateSession( aUserAccessToken, aSessionId );
         log.debug( "Terminated specific session for {}", aSessionId );
         // If the token was refreshed but the user terminates the current session, the new token must not be returned as it is no longer valid.
-        boolean shouldTokenBeReturned = !( aTokenRefreshed && AccessTokenUtils.getSessionId( aUserAccessToken ).equals( aSessionId ) );
+        boolean shouldTokenBeReturned = aTokenRefreshed && !AccessTokenUtils.getSessionId( aUserAccessToken ).equals( aSessionId );
+
+        ResponseDto.Builder< Serializable > responseBuilder = ResponseDto.builder()
+                .withStatusInfo( "200", "Session terminated successfully." )
+                // Method .withUserAccessToken adds token info only if the first argument is true.
+                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) );
+
+        if ( AccessTokenUtils.getSessionId( aUserAccessToken ).equals( aSessionId ) ) {
+            responseBuilder.withClientActionFlag( AuthClientActionFlags.CLEAR_USER_SESSION_DATA );
+        }
+
         return ResponseEntity
                 .status( HttpStatus.OK )
                 .body(
-                        ResponseDto.builder()
-                                .withStatusInfo( "200", "Session terminated successfully." )
-                                // Method .withUserAccessToken adds token info only if the first argument is true.
-                                .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
-                                .build()
+                        responseBuilder.build()
                 );
     }
 
