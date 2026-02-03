@@ -144,6 +144,7 @@ class AuthenticationController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "All user sessions terminated successfully." )
+                                .withClientActionFlag( AuthClientActionFlags.CLEAR_USER_SESSION_DATA )
                                 .build()
                 );
 
