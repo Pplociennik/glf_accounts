@@ -7,14 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import java.io.Serializable;
 
@@ -36,10 +32,9 @@ public class AbstractIntegrationTest extends AbstractIntegrationEnvironment {
     protected static final String GET_KEYCLOAK_CLIENT_TOKEN_ENDPOINT = "/realms/integration/protocol/openid-connect/token";
 
     /**
-     * A test implementation of the {@link RestTemplate} class.
+     * An HTTP client used for test requests.
      */
-    @Autowired
-    protected TestRestTemplate restTemplate;
+    protected RestClient restClient = RestClient.create();
 
     // ############################################################################################
 
@@ -60,18 +55,18 @@ public class AbstractIntegrationTest extends AbstractIntegrationEnvironment {
 
         String url = URL + mappedPort + GET_KEYCLOAK_CLIENT_TOKEN_ENDPOINT;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType( MediaType.APPLICATION_FORM_URLENCODED );
-
         MultiValueMap< String, String > requestParams = new LinkedMultiValueMap<>();
         requestParams.add( "grant_type", "client_credentials" );
         requestParams.add( "client_id", ContainerDetails.KEYCLOAK_CLIENT_ID );
         requestParams.add( "client_secret", ContainerDetails.KEYCLOAK_CLIENT_SECRET );
         requestParams.add( "scope", "openid email profile roles" );
 
-        HttpEntity< MultiValueMap< String, String > > request = new HttpEntity<>( requestParams, headers );
-
-        return restTemplate.postForObject( url, request, String.class );
+        return restClient.post()
+                .uri( url )
+                .contentType( MediaType.APPLICATION_FORM_URLENCODED )
+                .body( requestParams )
+                .retrieve()
+                .body( String.class );
     }
 
     // ############################################################################################
