@@ -8,8 +8,6 @@ import com.goaleaf.accounts.integration.AbstractIntegrationTest;
 import com.goaleaf.accounts.service.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
@@ -51,17 +49,14 @@ public class RegistrationProcessTest extends AbstractIntegrationTest {
         CredentialsDto[] credentialsDtos = { credentialsDto };
         RegistrationRequestDto requestDto = new RegistrationRequestDto( TEST_USERNAME, TEST_EMAIL_ADDRESS, true, credentialsDtos );
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType( MediaType.APPLICATION_JSON );
-        headers.set( "Authorization", "Bearer " + clientAccessToken );
-        HttpEntity< RegistrationRequestDto > request = new HttpEntity<>( requestDto, headers );
-
         // WHEN
-        ResponseEntity< ResponseDto > response = restTemplate.postForEntity(
-                getUrl( REGISTRATION_ENDPOINT ),
-                request,
-                ResponseDto.class
-        );
+        ResponseEntity< ResponseDto > response = restClient.post()
+                .uri( getUrl( REGISTRATION_ENDPOINT ) )
+                .contentType( MediaType.APPLICATION_JSON )
+                .header( "Authorization", "Bearer " + clientAccessToken )
+                .body( requestDto )
+                .retrieve()
+                .toEntity( ResponseDto.class );
 
         // THEN
         assertThat( response.getStatusCode() ).isEqualTo( CREATED );
@@ -85,19 +80,15 @@ public class RegistrationProcessTest extends AbstractIntegrationTest {
         CredentialsDto[] credentialsDtos = { credentialsDto };
         RegistrationRequestDto requestDto = new RegistrationRequestDto( TEST_USERNAME_2, TEST_EMAIL_ADDRESS_2, true, credentialsDtos );
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType( MediaType.APPLICATION_JSON );
-        headers.set( "Authorization", "Bearer " + registrationClientAccessToken );
-
-        HttpEntity< RegistrationRequestDto > requestEntity = new HttpEntity<>( requestDto, headers );
-
         // WHEN
         // Registration
-        ResponseEntity< ResponseDto > response = restTemplate.postForEntity(
-                getUrl( REGISTRATION_ENDPOINT ),
-                requestEntity,
-                ResponseDto.class
-        );
+        ResponseEntity< ResponseDto > response = restClient.post()
+                .uri( getUrl( REGISTRATION_ENDPOINT ) )
+                .contentType( MediaType.APPLICATION_JSON )
+                .header( "Authorization", "Bearer " + registrationClientAccessToken )
+                .body( requestDto )
+                .retrieve()
+                .toEntity( ResponseDto.class );
 
         // THEN
         UserDetailsDto userDetails = userDetailsService.findUserDetailsByEmail( TEST_EMAIL_ADDRESS );
