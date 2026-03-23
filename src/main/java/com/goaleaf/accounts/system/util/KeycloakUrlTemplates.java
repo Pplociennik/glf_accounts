@@ -242,6 +242,32 @@ public enum KeycloakUrlTemplates {
         public Set< String > getRequiredParametersNames() {
             return Set.of( "Realm name" );
         }
+    },
+
+    /**
+     * A constant representing a URL template for deleting a user from a specified realm in the Keycloak system.
+     * This template contains placeholders for the realm name and user ID that must be provided to construct the final URL.
+     * <p>
+     * Usage:
+     * - Used to construct an endpoint for deleting a user from a specific realm in Keycloak.
+     * <p>
+     * Placeholders:
+     * 1. `%s` - Represents the name of the realm (Realm name).
+     * 2. `%s` - Represents the unique identifier of the user to be deleted (User ID).
+     * <p>
+     * Required Parameters:
+     * - Realm name: Name of the realm from which the user will be deleted.
+     * - User ID: The identifier of the user to delete.
+     * <p>
+     * Overrides:
+     * - {@code getRequiredParametersNames}: Returns the set of required parameter names for this URL template,
+     * including "Realm name" and "User ID".
+     */
+    DELETE_USER_TEMPLATE( "/admin/realms/%s/users/%s" ) {
+        @Override
+        public Set< String > getRequiredParametersNames() {
+            return Set.of( "Realm name", "User ID" );
+        }
     };
 
     /**

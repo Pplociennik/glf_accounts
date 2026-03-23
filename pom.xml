@@ -118,9 +118,8 @@
 
         <!--  Liquibase  -->
         <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
-            <version>${version.liquibase-maven-plugin}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
         </dependency>
 
         <!--    E2E tests    -->

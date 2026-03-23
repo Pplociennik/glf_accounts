@@ -140,6 +140,22 @@ public final class AccessTokenUtils {
         return ( int ) ( expirationEpoch - epochNow );
     }
 
+    /**
+     * Extracts the user's email address from the provided authentication token.
+     *
+     * @param aAuthenticationToken
+     *         a non-null string representing the JWT authentication token; must not be null
+     * @return the email address extracted from the token
+     *
+     * @throws NullPointerException
+     *         if the provided authentication token is null
+     */
+    public static String getUserEmail( @NonNull String aAuthenticationToken ) {
+        requireNonNull( aAuthenticationToken );
+        DecodedJWT decodedJWT = JWT.decode( aAuthenticationToken );
+        return decodedJWT.getClaim( "email" ).asString();
+    }
+
     private static String getTokenWithoutPrefix( String aAccessToken ) {
         return aAccessToken.split( " " )[ 1 ];
     }

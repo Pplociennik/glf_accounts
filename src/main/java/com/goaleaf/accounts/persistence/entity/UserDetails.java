@@ -16,7 +16,7 @@ import java.util.UUID;
  *
  * @author Created by: Pplociennik at 10.03.2024 17:07
  */
-@Table( name = "USER_DETAILS" )
+@Table( name = "user_details" )
 @Getter
 @Setter
 @NoArgsConstructor
@@ -27,19 +27,19 @@ public class UserDetails extends ModifiableDataEntity {
 
     @Id
     @UuidGenerator
-    @Column( name = "ID", nullable = false, unique = true, updatable = false )
+    @Column( name = "id", nullable = false, unique = true, updatable = false )
     private UUID id;
 
-    @Column( name = "USER_ID", nullable = false, unique = true, updatable = false )
+    @Column( name = "user_id", nullable = false, unique = true, updatable = false )
     private String userId;
 
-    @Column( name = "NAME" )
+    @Column( name = "name" )
     private String userName;
 
-    @Column( name = "EMAIL" )
+    @Column( name = "email" )
     private String emailAddress;
 
-    @Column( name = "DESCRIPTION" )
+    @Column( name = "description" )
     private String description;
 
     @Override

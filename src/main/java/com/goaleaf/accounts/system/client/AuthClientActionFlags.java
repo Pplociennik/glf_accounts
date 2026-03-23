@@ -15,4 +15,16 @@ public enum AuthClientActionFlags implements ClientActionFlag {
      * it to verify the email address associated with the user account.
      */
     VERIFY_USER_EMAIL,
+
+    /**
+     * Represents a client action flag that specifies the action of clearing the user's session.
+     * This action is typically used to log out the user or reset the session data on the client side
+     * after receiving a corresponding response from the server.
+     */
+    CLEAR_USER_SESSION_DATA,
+
+    /**
+     * Represents a client action flag notifying the client that the user password has been changed successfully.
+     */
+    USER_PASSWORD_CHANGED
 }

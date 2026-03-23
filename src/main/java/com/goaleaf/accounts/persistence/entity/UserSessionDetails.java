@@ -16,11 +16,11 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Represents user session details stored in the "ACCOUNTS_USER_SESSION_DETAILS" table.
+ * Represents user session details stored in the "accounts_user_session_details" table.
  * This entity contains information regarding a user's session, such as session ID, creation time,
  * activity status, and refresh token.
  * <p>
- * The entity is uniquely identified by its ID and is mapped to the "ACCOUNTS_USER_SESSION_DETAILS" table.
+ * The entity is uniquely identified by its ID and is mapped to the "accounts_user_session_details" table.
  * It provides equality and hash code implementations based on its attributes.
  * <p>
  * Inherits common identifiable entity functionality from BaseIdentifiableDataEntity.
@@ -28,29 +28,29 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table( name = "ACCOUNTS_USER_SESSION_DETAILS" )
+@Table( name = "accounts_user_session_details" )
 @Entity
 @AllArgsConstructor
 public class UserSessionDetails extends BaseDataEntity {
 
     @Id
     @UuidGenerator
-    @Column( name = "ID", nullable = false, unique = true, updatable = false )
+    @Column( name = "id", nullable = false, unique = true, updatable = false )
     private UUID id;
 
-    @Column( name = "SESSION_ID", nullable = false, updatable = false, unique = true )
+    @Column( name = "session_id", nullable = false, updatable = false, unique = true )
     private String sessionId;
 
-    @Column( name = "REFRESH_TOKEN", nullable = false, length = 1000 )
+    @Column( name = "refresh_token", nullable = false, length = 1000 )
     private String refreshToken;
 
-    @Column( name = "AUTHENTICATED_USER_ID", nullable = false, updatable = false )
+    @Column( name = "authenticated_user_id", nullable = false, updatable = false )
     private String authenticatedUserId;
 
-    @Column( name = "LOCATION", nullable = false, updatable = false )
+    @Column( name = "location", nullable = false, updatable = false )
     private String location;
 
-    @Column( name = "DEVICE" )
+    @Column( name = "device" )
     private String device;
 
     private UserSessionDetails( Builder builder ) {

@@ -42,4 +42,6 @@ public interface UserDetailsRepository extends JpaRepository< UserDetails, UUID 
      */
     @Override
     void delete( @NonNull UserDetails aUserDetails );
+
+    void deleteUserDetailsByUserId( String userId );
 }
