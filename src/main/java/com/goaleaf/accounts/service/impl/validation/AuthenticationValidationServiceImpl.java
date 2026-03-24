@@ -81,7 +81,7 @@ class AuthenticationValidationServiceImpl implements AuthenticationValidationSer
      * <p>
      * This ensures that passwords are strong and comply with modern security practices.
      */
-    private static final String VALID_PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\p{P}\\p{S}])[^\\s]{8,128}$";
+    private static final String VALID_PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\p{P}\\p{S}])[^\\s]{8,100}$";
 
     /**
      * An injected instance of the {@link UserDetailsRepository}.
