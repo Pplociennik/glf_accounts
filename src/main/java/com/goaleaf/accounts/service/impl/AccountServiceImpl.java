@@ -11,6 +11,7 @@ import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.KeycloakServiceConnectionService;
 import com.goaleaf.accounts.service.UserDetailsService;
 import com.goaleaf.accounts.service.validation.AuthenticationValidationService;
+import com.goaleaf.accounts.system.exc.auth.AccountAlreadyVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakActionRequestFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakResourceRequestFailedException;
@@ -171,6 +172,8 @@ class AccountServiceImpl implements AccountService {
         String clientRedirectionUri = systemPropertiesReaderService.readProperty( CLIENT_URI );
         String redirectUri = clientRedirectionUri + EMAIL_ADDRESS_CONFIRMATION_CLIENT_PATH;
 
+        validateIfEmailAlreadyConfirmed( aEmailAddress );
+
         WebClient client = keycloakConnectionService.getAuthServiceConnectionWebClient( SEND_EMAIL_ADDRESS_VERIFICATION_MESSAGE_TEMPLATE, realmName, userId );
         try {
             client.put()
@@ -188,6 +191,15 @@ class AccountServiceImpl implements AccountService {
             KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
             requireNonNull( errorResponse );
             throw new KeycloakActionRequestFailedException( CommonsResExcMsgTranslationKey.UNEXPECTED_EXCEPTION, errorResponse.getErrorDescription() );
+        }
+    }
+
+    private void validateIfEmailAlreadyConfirmed( @NonNull String aEmailAddress ) {
+        requireNonNull( aEmailAddress );
+        AccountDto account = getAccountByEmailAddress( aEmailAddress );
+
+        if ( account.getEmailVerified() ) {
+            throw new AccountAlreadyVerifiedException();
         }
     }
 

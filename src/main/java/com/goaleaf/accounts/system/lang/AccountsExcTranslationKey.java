@@ -57,6 +57,11 @@ public enum AccountsExcTranslationKey implements TranslationKey {
      */
     ACCOUNT_NOT_VERIFIED,
 
+    /**
+     * Your account has already been verified.
+     */
+    ACCOUNT_ALREADY_VERIFIED,
+
     ;
 
     public static final String RESOURCE_BUNDLE_NAME = "lang/AccountsExcTranslationKey";
