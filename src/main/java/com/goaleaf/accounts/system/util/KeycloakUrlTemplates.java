@@ -6,13 +6,13 @@ import lombok.Getter;
 import java.util.Set;
 
 /**
- * The {@code KeycloakUrlTemplates} enum defines reusable templates for constructing
- * various Keycloak endpoint URLs. These templates include placeholders for
- * server URL, realm name, and user-specific information, allowing dynamic
- * URL generation for interacting with Keycloak's REST API.
+ * Defines reusable templates for constructing various Keycloak endpoint URLs.
  *
- * <p><b>Author:</b> Pplociennik</p>
- * <p><b>Created:</b> 01.04.2025 23:27</p>
+ * <p>These templates include placeholders for realm name and user-specific information,
+ * allowing dynamic URL generation for interacting with Keycloak's REST API.</p>
+ *
+ * @author Pplociennik
+ * @since 1.0
  */
 @AllArgsConstructor
 @Getter
@@ -205,10 +205,11 @@ public enum KeycloakUrlTemplates {
     },
 
     /**
-     * An enumeration constant in the {@code KeycloakUrlTemplates} enum that defines a URL template for resetting user
-     * account credentials in a specific Keycloak realm.
-     * Required parameters:<br>
-     * - "Realm name" - indicates the name of the Keycloak realm for which the reset credentials URL is generated.
+     * Defines a URL template for resetting user account credentials in a specific Keycloak realm.
+     *
+     * <p>Required parameters:<br>
+     * - Realm name: The name of the Keycloak realm.<br>
+     * - User ID: The unique identifier of the user whose credentials are to be reset.</p>
      */
     RESET_ACCOUNT_CREDENTIALS_TEMPLATE( "/admin/realms/%s/users/%s/execute-actions-email" ) {
         @Override
@@ -220,9 +221,10 @@ public enum KeycloakUrlTemplates {
     /**
      * Represents a URL template for the Keycloak endpoint used to change account credentials,
      * specifically for updating a user's password.
-     * <p>
-     * The template takes a single parameter for constructing the URL:<br>
-     * - `Realm name`: Specifies the name of the Keycloak realm.
+     *
+     * <p>Required parameters:<br>
+     * - Realm name: The name of the Keycloak realm.<br>
+     * - User ID: The unique identifier of the user whose password is to be changed.</p>
      */
     CHANGE_ACCOUNT_CREDENTIALS_TEMPLATE( "/admin/realms/%s/users/%s/reset-password" ) {
         @Override
@@ -267,6 +269,22 @@ public enum KeycloakUrlTemplates {
         @Override
         public Set< String > getRequiredParametersNames() {
             return Set.of( "Realm name", "User ID" );
+        }
+    },
+
+    /**
+     * Defines a URL template for retrieving a user by their email address from a specific Keycloak realm.
+     *
+     * <p>Required parameters:<br>
+     * - Realm name: The name of the Keycloak realm.<br>
+     * - User email: The email address of the user to look up.</p>
+     *
+     * <p>Example format: {@code /admin/realms/my-realm/users/?email=user@example.com&exact=true}</p>
+     */
+    GET_USER_BY_EMAIL_TEMPLATE( "/admin/realms/%s/users/?email={%s}&exact=true" ) {
+        @Override
+        public Set< String > getRequiredParametersNames() {
+            return Set.of( "Realm name", "User email" );
         }
     };
 

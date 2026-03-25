@@ -5,6 +5,7 @@ import com.github.pplociennik.commons.exc.BaseRuntimeException;
 import com.github.pplociennik.commons.exc.GlobalExceptionHandler;
 import com.github.pplociennik.commons.exc.validation.ValidationException;
 import com.github.pplociennik.commons.service.TimeService;
+import com.goaleaf.accounts.system.exc.auth.AccountAlreadyVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AuthenticationFailedException;
 import com.goaleaf.accounts.system.exc.auth.RegistrationFailedException;
@@ -25,6 +26,7 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.goaleaf.accounts.system.client.AuthClientActionFlags.ACCOUNT_ALREADY_VERIFIED;
 import static com.goaleaf.accounts.system.client.AuthClientActionFlags.VERIFY_USER_EMAIL;
 
 /**
@@ -40,8 +42,8 @@ import static com.goaleaf.accounts.system.client.AuthClientActionFlags.VERIFY_US
  * it into an {@link ErrorResponseDto} with meaningful details about the error.
  * </p>
  *
- * <p><b>Created by:</b> Pplociennik<br>
- * <b>Date:</b> 24.03.2025 22:05</p>
+ * @author Pplociennik
+ * @since 1.0
  */
 @ControllerAdvice
 @AllArgsConstructor
@@ -290,8 +292,49 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
         return new ResponseEntity<>( errorResponseDto, HttpStatus.FORBIDDEN );
     }
 
+    /**
+     * Handles exceptions of type {@link AccountAlreadyVerifiedException} that occur when a user
+     * attempts to verify an account that has already been verified.
+     * <p>
+     * This method captures the {@link AccountAlreadyVerifiedException}, constructs an {@link ErrorResponseDto}
+     * containing the error details with the {@code ACCOUNT_ALREADY_VERIFIED} client action flag, and returns
+     * it in a {@link ResponseEntity}. The response includes the description of the failed request, the HTTP
+     * status code of {@code FORBIDDEN (403)}, a localized error message, and the timestamp of occurrence.
+     *
+     * @param aException
+     *         the exception representing the error caused by an account that has already been verified.
+     *         It contains details about the issue that triggered the exception.
+     * @param aWebRequest
+     *         the web request during which the exception occurred. This provides contextual information about
+     *         the HTTP request for debugging and error identification purposes.
+     * @return a {@link ResponseEntity} containing an {@link ErrorResponseDto} with details about the error
+     *         and an HTTP status code of {@code FORBIDDEN (403)}.
+     */
+    @ExceptionHandler( AccountAlreadyVerifiedException.class )
+    public ResponseEntity< ErrorResponseDto > handleAccountAlreadyVerifiedException( AccountAlreadyVerifiedException aException,
+                                                                                     WebRequest aWebRequest ) {
+        ErrorResponseDto errorResponseDto = ErrorResponseDto.builder(
+                        aWebRequest.getDescription( false ),
+                        HttpStatus.FORBIDDEN,
+                        aException.getLocalizedMessage(),
+                        timeService.getCurrentSystemDateTime() )
+                .withClientActionFlag( ACCOUNT_ALREADY_VERIFIED )
+                .build();
+
+        log.error( aException.getLocalizedMessage(), aException );
+
+        return new ResponseEntity<>( errorResponseDto, HttpStatus.FORBIDDEN );
+    }
+
     // #################################################################################################################
 
+    /**
+     * Extracts the localized message from the first suppressed exception of a {@link ValidationException}.
+     *
+     * @param aException
+     *         the {@link ValidationException} containing suppressed exceptions with validation error details
+     * @return the localized message of the first suppressed exception
+     */
     private String getValidationLocalizedMessageParameter( ValidationException aException ) {
         Throwable suppressedException = aException.getSuppressed()[ 0 ];
         return suppressedException.getLocalizedMessage();

@@ -6,6 +6,8 @@ import com.github.pplociennik.commons.system.client.ClientActionFlag;
  * Values being the action flags determining action to be executed on the client's side after receiving the response.
  *
  * @author Created by: Pplociennik at 26.01.2026 21:05
+ * @since 1.0
+ * @see ClientActionFlag
  */
 public enum AuthClientActionFlags implements ClientActionFlag {
 
@@ -26,5 +28,11 @@ public enum AuthClientActionFlags implements ClientActionFlag {
     /**
      * Represents a client action flag notifying the client that the user password has been changed successfully.
      */
-    USER_PASSWORD_CHANGED
+    USER_PASSWORD_CHANGED,
+
+    /**
+     * Represents a client action flag indicating that the user's account has already been verified.
+     * This action notifies the client that no further verification is needed.
+     */
+    ACCOUNT_ALREADY_VERIFIED,
 }
