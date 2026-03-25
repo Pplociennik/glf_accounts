@@ -13,6 +13,7 @@ import com.goaleaf.accounts.service.UserDetailsService;
 import com.goaleaf.accounts.service.validation.AuthenticationValidationService;
 import com.goaleaf.accounts.system.exc.auth.AccountAlreadyVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
+import com.goaleaf.accounts.system.exc.auth.AuthenticationFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakActionRequestFailedException;
 import com.goaleaf.accounts.system.exc.request.KeycloakResourceRequestFailedException;
 import com.goaleaf.accounts.system.lang.AccountsExcTranslationKey;
@@ -146,6 +147,10 @@ class AccountServiceImpl implements AccountService {
                     .bodyToFlux( AccountDto.class )
                     .collectList()
                     .block();
+
+            if ( resultList == null || resultList.isEmpty() ) {
+                throw new AuthenticationFailedException( AccountsExcTranslationKey.USER_DOES_NOT_EXIST );
+            }
 
             return resultList.get( 0 );
         } catch ( WebClientResponseException aE ) {

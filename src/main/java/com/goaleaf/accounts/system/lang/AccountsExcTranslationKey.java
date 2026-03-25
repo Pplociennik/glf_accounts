@@ -62,7 +62,10 @@ public enum AccountsExcTranslationKey implements TranslationKey {
      */
     ACCOUNT_ALREADY_VERIFIED,
 
-    ;
+    /**
+     * Such a user does not exist!
+     */
+    USER_DOES_NOT_EXIST;
 
     public static final String RESOURCE_BUNDLE_NAME = "lang/AccountsExcTranslationKey";
 
