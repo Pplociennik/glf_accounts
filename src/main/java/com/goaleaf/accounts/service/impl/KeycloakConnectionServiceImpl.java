@@ -167,6 +167,7 @@ class KeycloakConnectionServiceImpl implements KeycloakServiceConnectionService 
         } catch ( WebClientResponseException aE ) {
             KeycloakErrorResponseDto errorResponse = aE.getResponseBodyAs( KeycloakErrorResponseDto.class );
             requireNonNull( errorResponse );
+            log.debug( errorResponse.getErrorDescription() );
             throw new KeycloakActionRequestFailedException( CommonsResExcMsgTranslationKey.UNEXPECTED_EXCEPTION, errorResponse.getErrorDescription() );
         }
     }

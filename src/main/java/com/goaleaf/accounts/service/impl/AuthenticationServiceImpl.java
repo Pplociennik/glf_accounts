@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import static com.github.pplociennik.commons.utility.OptionalUtils.getMandatoryValue;
+import static com.github.pplociennik.commons.utility.OptionalUtils.getOptionalValue;
 import static com.goaleaf.accounts.system.properties.AccountsSystemProperties.*;
 import static com.goaleaf.accounts.system.util.AccessTokenUtils.getSessionId;
 import static com.goaleaf.accounts.system.util.KeycloakUrlTemplates.TERMINATE_ALL_USER_SESSIONS_TEMPLATE;
@@ -243,11 +243,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
         log.info( "Refreshing user session details" );
         requireNonNull( aUserAccessToken );
         String sessionId = getSessionId( aUserAccessToken );
-        UserSessionDetails sessionDetails = getMandatoryValue( userSessionDetailsRepository.findBySessionId( sessionId ) );
+        UserSessionDetails sessionDetails = getOptionalValue( userSessionDetailsRepository.findBySessionId( sessionId ) );
 
-        AuthenticationTokenDto refreshedToken = keycloakConnectionService.sendRefreshTokenRequest( sessionDetails.getRefreshToken() );
-        userSessionDetailsService.updateSessionDetails( sessionDetails, refreshedToken );
-        return refreshedToken;
+        if ( sessionDetails != null ) {
+            AuthenticationTokenDto refreshedToken = keycloakConnectionService.sendRefreshTokenRequest( sessionDetails.getRefreshToken() );
+            userSessionDetailsService.updateSessionDetails( sessionDetails, refreshedToken );
+            return refreshedToken;
+        }
+
+        return null;
     }
 
     /**

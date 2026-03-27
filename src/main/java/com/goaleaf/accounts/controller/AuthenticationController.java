@@ -8,7 +8,7 @@ import com.goaleaf.accounts.data.dto.response.AuthenticationResponseUserDataDto;
 import com.goaleaf.accounts.data.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.AuthenticationService;
-import com.goaleaf.accounts.system.client.AuthClientActionFlags;
+import com.goaleaf.accounts.system.client.ServerEventResponseFlag;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -116,11 +116,20 @@ class AuthenticationController {
         log.debug( "Refreshing user access token {}", aUserAccessToken );
         AuthenticationTokenDto authenticationTokenDto = authenticationService.refreshUserSession( aUserAccessToken );
         log.debug( "Refreshed user access token {}", authenticationTokenDto );
+
+        ResponseDto.Builder< AuthenticationTokenDto > responseBuilder = ResponseDto.builder();
+
+        if ( authenticationTokenDto != null ) {
+            responseBuilder.withStatusInfo( "200", "User refreshed successfully." )
+                    .withUserAccessToken( true, authenticationTokenDto.getAccessToken(), authenticationTokenDto.getExpiresIn() );
+        } else {
+            responseBuilder.withStatusInfo( "200", "Session has been terminated." )
+                    .withServerEventFlag( ServerEventResponseFlag.CURRENT_SESSION_CLOSED_BY_USER_EXPLICITLY );
+        }
+
         return ResponseEntity
                 .status( HttpStatus.OK )
-                .body( ResponseDto.< AuthenticationTokenDto >builder()
-                        .withStatusInfo( "200", "User access token refreshed successfully." )
-                        .withUserAccessToken( true, authenticationTokenDto.getAccessToken(), authenticationTokenDto.getExpiresIn() ).build() );
+                .body( responseBuilder.build() );
     }
 
     /**
@@ -144,7 +153,7 @@ class AuthenticationController {
                 .body(
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "All user sessions terminated successfully." )
-                                .withClientActionFlag( AuthClientActionFlags.CLEAR_USER_SESSION_DATA )
+                                .withServerEventFlag( ServerEventResponseFlag.CURRENT_SESSION_CLOSED_BY_USER_IMPLICITLY )
                                 .build()
                 );
 
@@ -203,7 +212,9 @@ class AuthenticationController {
                 .withUserAccessToken( shouldTokenBeReturned, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) );
 
         if ( AccessTokenUtils.getSessionId( aUserAccessToken ).equals( aSessionId ) ) {
-            responseBuilder.withClientActionFlag( AuthClientActionFlags.CLEAR_USER_SESSION_DATA );
+            responseBuilder.withServerEventFlag( ServerEventResponseFlag.CURRENT_SESSION_CLOSED_BY_USER_IMPLICITLY );
+        } else {
+            responseBuilder.withServerEventFlag( ServerEventResponseFlag.OTHER_USER_SESSION_CLOSED_BY_USER );
         }
 
         return ResponseEntity
