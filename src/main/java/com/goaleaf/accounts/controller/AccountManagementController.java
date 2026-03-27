@@ -8,7 +8,7 @@ import com.goaleaf.accounts.data.dto.auth.AuthenticationDetailsDto;
 import com.goaleaf.accounts.data.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.service.AccountService;
 import com.goaleaf.accounts.service.AuthenticationService;
-import com.goaleaf.accounts.system.client.AuthClientActionFlags;
+import com.goaleaf.accounts.system.client.ServerEventResponseFlag;
 import com.goaleaf.accounts.system.util.AccessTokenUtils;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -156,7 +156,7 @@ class AccountManagementController {
                         ResponseDto.builder()
                                 .withStatusInfo( "200", "Password changed successfully." )
                                 .withUserAccessToken( aTokenRefreshed, aUserAccessToken, AccessTokenUtils.getExpiresIn( aUserAccessToken ) )
-                                .withClientActionFlag( AuthClientActionFlags.USER_PASSWORD_CHANGED )
+                                .withServerEventFlag( ServerEventResponseFlag.CURRENT_SESSION_CLOSED_BY_USER_IMPLICITLY )
                                 .build()
                 );
 

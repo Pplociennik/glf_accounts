@@ -5,6 +5,7 @@ import com.github.pplociennik.commons.exc.BaseRuntimeException;
 import com.github.pplociennik.commons.exc.GlobalExceptionHandler;
 import com.github.pplociennik.commons.exc.validation.ValidationException;
 import com.github.pplociennik.commons.service.TimeService;
+import com.goaleaf.accounts.system.client.ServerEventResponseFlag;
 import com.goaleaf.accounts.system.exc.auth.AccountAlreadyVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AccountNotVerifiedException;
 import com.goaleaf.accounts.system.exc.auth.AuthenticationFailedException;
@@ -26,8 +27,8 @@ import org.springframework.web.context.request.WebRequest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.goaleaf.accounts.system.client.AuthClientActionFlags.ACCOUNT_ALREADY_VERIFIED;
-import static com.goaleaf.accounts.system.client.AuthClientActionFlags.VERIFY_USER_EMAIL;
+import static com.goaleaf.accounts.system.client.ServerEventResponseFlag.USER_EMAIL_ALREADY_VERIFIED;
+import static com.goaleaf.accounts.system.client.ServerEventResponseFlag.USER_EMAIL_NOT_VERIFIED;
 
 /**
  * Provides centralized exception handling.
@@ -252,6 +253,7 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
                 timeService.getCurrentSystemDateTime()
         );
 
+        errorResponseDTO.setServerEventFlag( ServerEventResponseFlag.CURRENT_SESSION_CLOSED_BY_USER_EXPLICITLY );
         log.error( aException.getLocalizedMessage(), aException );
 
         return new ResponseEntity<>( errorResponseDTO, HttpStatus.INTERNAL_SERVER_ERROR );
@@ -283,7 +285,7 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
                         HttpStatus.FORBIDDEN,
                         aException.getLocalizedMessage(),
                         timeService.getCurrentSystemDateTime() )
-                .withClientActionFlag( VERIFY_USER_EMAIL )
+                .withServerEventFlag( USER_EMAIL_NOT_VERIFIED )
                 .withResponseData( aException.getEmailAddress() )
                 .build();
 
@@ -308,7 +310,7 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
      *         the web request during which the exception occurred. This provides contextual information about
      *         the HTTP request for debugging and error identification purposes.
      * @return a {@link ResponseEntity} containing an {@link ErrorResponseDto} with details about the error
-     *         and an HTTP status code of {@code FORBIDDEN (403)}.
+     * and an HTTP status code of {@code FORBIDDEN (403)}.
      */
     @ExceptionHandler( AccountAlreadyVerifiedException.class )
     public ResponseEntity< ErrorResponseDto > handleAccountAlreadyVerifiedException( AccountAlreadyVerifiedException aException,
@@ -318,7 +320,7 @@ class GlobalControllerAdvice extends GlobalExceptionHandler {
                         HttpStatus.FORBIDDEN,
                         aException.getLocalizedMessage(),
                         timeService.getCurrentSystemDateTime() )
-                .withClientActionFlag( ACCOUNT_ALREADY_VERIFIED )
+                .withServerEventFlag( USER_EMAIL_ALREADY_VERIFIED )
                 .build();
 
         log.error( aException.getLocalizedMessage(), aException );
