@@ -1,9 +1,9 @@
 package com.goaleaf.accounts;
 
 import com.github.pplociennik.commons.system.registry.CollectingSystemRegistry;
-import com.goaleaf.accounts.service.AuthenticationService;
-import com.goaleaf.accounts.service.UserSessionDetailsService;
-import com.goaleaf.accounts.system.filter.UserTokenValidationFilter;
+import com.goaleaf.accounts.domain.auth.AuthenticationService;
+import com.goaleaf.accounts.domain.session.UserSessionDetailsService;
+import com.goaleaf.accounts.domain.system.filter.UserTokenValidationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

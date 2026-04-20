@@ -1,0 +1,42 @@
+package com.goaleaf.accounts.domain.user;
+
+import com.github.pplociennik.commons.exc.resources.ResourceNotFoundException;
+import com.goaleaf.accounts.domain.user.model.UserDetails;
+import org.springframework.lang.NonNull;
+
+/**
+ * A service providing functions related to managing users.
+ *
+ * @author Created by: Pplociennik at 19.03.2024 18:08
+ */
+public interface UserDetailsService {
+
+    /**
+     * Creates a new user basing on the specified data.
+     *
+     * @param aUserDetails
+     *         the user data.
+     * @return the created user.
+     */
+    UserDetails createUserDetails( @NonNull UserDetails aUserDetails );
+
+    /**
+     * Retrieves user details by the provided email address.
+     *
+     * @param aEmail
+     *         the email address of the user whose details are to be retrieved. Must not be null.
+     * @return a {@link UserDetails} object containing the user's details.
+     *
+     * @throws ResourceNotFoundException
+     *         if no user is found for the given email address.
+     */
+    UserDetails findUserDetailsByEmail( @NonNull String aEmail );
+
+    /**
+     * Deletes the user details associated with the specified user ID.
+     *
+     * @param aUserID
+     *         the ID of the user whose details are to be deleted. Must not be null or empty.
+     */
+    void deleteUserDetails( String aUserID );
+}

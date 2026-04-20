@@ -1,11 +1,11 @@
 package com.goaleaf.accounts.integration.authentication;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
-import com.goaleaf.accounts.data.dto.auth.CredentialsDto;
-import com.goaleaf.accounts.data.dto.auth.RegistrationRequestDto;
-import com.goaleaf.accounts.data.dto.user.UserDetailsDto;
+import com.goaleaf.accounts.api.dto.auth.CredentialsDto;
+import com.goaleaf.accounts.api.dto.auth.RegistrationRequestDto;
+import com.goaleaf.accounts.domain.user.UserDetailsService;
+import com.goaleaf.accounts.domain.user.model.UserDetails;
 import com.goaleaf.accounts.integration.AbstractIntegrationTest;
-import com.goaleaf.accounts.service.UserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -91,7 +91,7 @@ public class RegistrationProcessTest extends AbstractIntegrationTest {
                 .toEntity( ResponseDto.class );
 
         // THEN
-        UserDetailsDto userDetails = userDetailsService.findUserDetailsByEmail( TEST_EMAIL_ADDRESS );
+        UserDetails userDetails = userDetailsService.findUserDetailsByEmail( TEST_EMAIL_ADDRESS );
 
         assertThat( response.getStatusCode() ).isEqualTo( CREATED );
         assertThat( userDetails ).isNotNull();

@@ -1,0 +1,147 @@
+package com.goaleaf.accounts.infrastructure.persistence.entity;
+
+import com.github.pplociennik.commons.persistence.BaseDataEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.time.Instant;
+import java.util.Objects;
+import java.util.UUID;
+
+/**
+ * Represents user session details stored in the "accounts_user_session_details" table.
+ * This entity contains information regarding a user's session, such as session ID, creation time,
+ * activity status, and refresh token.
+ * <p>
+ * The entity is uniquely identified by its ID and is mapped to the "accounts_user_session_details" table.
+ * It provides equality and hash code implementations based on its attributes.
+ * <p>
+ * Inherits common identifiable entity functionality from BaseIdentifiableDataEntity.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@Table( name = "accounts_user_session_details" )
+@Entity
+@AllArgsConstructor
+public class UserSessionDetailsEntity extends BaseDataEntity {
+
+    @Id
+    @UuidGenerator
+    @Column( name = "id", nullable = false, unique = true, updatable = false )
+    private UUID id;
+
+    @Column( name = "session_id", nullable = false, updatable = false, unique = true )
+    private String sessionId;
+
+    @Column( name = "refresh_token", nullable = false, length = 1000 )
+    private String refreshToken;
+
+    @Column( name = "authenticated_user_id", nullable = false, updatable = false )
+    private String authenticatedUserId;
+
+    @Column( name = "location", nullable = false, updatable = false )
+    private String location;
+
+    @Column( name = "device" )
+    private String device;
+
+    private UserSessionDetailsEntity( Builder builder ) {
+        super();
+        this.id = builder.id;
+        this.sessionId = builder.sessionId;
+        this.refreshToken = builder.refreshToken;
+        this.authenticatedUserId = builder.authenticatedUserId;
+        this.location = builder.location;
+        this.device = builder.device;
+
+        setCreatedAt( builder.createdAt );
+        setCreatedBy( builder.createdBy );
+    }
+
+    /**
+     * Creates a new builder object.
+     *
+     * @return a new builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    @Override
+    public boolean equals( Object o ) {
+        if ( o == null || getClass() != o.getClass() ) return false;
+        UserSessionDetailsEntity that = ( UserSessionDetailsEntity ) o;
+        return Objects.equals( id, that.id ) && Objects.equals( sessionId, that.sessionId ) && Objects.equals( refreshToken, that.refreshToken ) && Objects.equals( authenticatedUserId, that.authenticatedUserId ) && Objects.equals( location, that.location ) && Objects.equals( device, that.device );
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash( id, sessionId, refreshToken, authenticatedUserId, location, device );
+    }
+
+    public static class Builder {
+        private UUID id;
+        private String sessionId;
+        private String refreshToken;
+        private String authenticatedUserId;
+        private String location;
+        private String device;
+        private Instant createdAt;
+        private String createdBy;
+
+        private Builder() {
+        }
+
+        public Builder id( UUID aId ) {
+            this.id = aId;
+            return this;
+        }
+
+        public Builder sessionId( String aSessionId ) {
+            this.sessionId = aSessionId;
+            return this;
+        }
+
+        public Builder refreshToken( String aRefreshToken ) {
+            this.refreshToken = aRefreshToken;
+            return this;
+        }
+
+        public Builder authenticatedUserId( String aAuthenticatedUserId ) {
+            this.authenticatedUserId = aAuthenticatedUserId;
+            return this;
+        }
+
+        public Builder location( String aLocation ) {
+            this.location = aLocation;
+            return this;
+        }
+
+        public Builder device( String aDevice ) {
+            this.device = aDevice;
+            return this;
+        }
+
+        public Builder createdAt( Instant aCreatedAt ) {
+            this.createdAt = aCreatedAt;
+            return this;
+        }
+
+        public Builder createdBy( String aCreatedBy ) {
+            this.createdBy = aCreatedBy;
+            return this;
+        }
+
+        public UserSessionDetailsEntity build() {
+            return new UserSessionDetailsEntity( this );
+        }
+    }
+}

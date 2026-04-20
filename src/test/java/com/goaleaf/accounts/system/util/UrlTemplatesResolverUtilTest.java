@@ -1,5 +1,7 @@
 package com.goaleaf.accounts.system.util;
 
+import com.goaleaf.accounts.domain.system.util.KeycloakUrlTemplates;
+import com.goaleaf.accounts.domain.system.util.UrlTemplatesResolverUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

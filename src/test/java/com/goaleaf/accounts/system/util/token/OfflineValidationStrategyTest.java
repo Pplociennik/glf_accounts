@@ -1,6 +1,7 @@
 package com.goaleaf.accounts.system.util.token;
 
 import com.github.pplociennik.commons.service.TimeService;
+import com.goaleaf.accounts.domain.system.util.token.OfflineValidationStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
