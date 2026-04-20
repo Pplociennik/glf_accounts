@@ -34,7 +34,7 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
     @Override
     public Optional<UserDetails> findByEmailAddress( String aEmailAddress ) {
         return userDetailsDao.findByEmailAddress( aEmailAddress )
-                .map( UserDetailsRepositoryImpl::mapToDomain );
+                .map( UserDetailsPersistenceMapper::mapToDomain );
     }
 
     /**
@@ -47,7 +47,7 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
     @Override
     public Optional<UserDetails> findByUserId( String aUserId ) {
         return userDetailsDao.findByUserId( aUserId )
-                .map( UserDetailsRepositoryImpl::mapToDomain );
+                .map( UserDetailsPersistenceMapper::mapToDomain );
     }
 
     /**
@@ -59,9 +59,9 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
      */
     @Override
     public UserDetails save( @NonNull UserDetails aUserDetails ) {
-        UserDetailsEntity entity = mapToEntity( aUserDetails );
+        UserDetailsEntity entity = UserDetailsPersistenceMapper.mapToEntity( aUserDetails );
         UserDetailsEntity saved = userDetailsDao.save( entity );
-        return mapToDomain( saved );
+        return UserDetailsPersistenceMapper.mapToDomain( saved );
     }
 
     /**
@@ -72,7 +72,7 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
      */
     @Override
     public void delete( @NonNull UserDetails aUserDetails ) {
-        userDetailsDao.delete( mapToEntity( aUserDetails ) );
+        userDetailsDao.delete( UserDetailsPersistenceMapper.mapToEntity( aUserDetails ) );
     }
 
     /**
@@ -84,31 +84,5 @@ public class UserDetailsRepositoryImpl implements UserDetailsRepository {
     @Override
     public void deleteByUserId( String aUserId ) {
         userDetailsDao.deleteUserDetailsByUserId( aUserId );
-    }
-
-    private static UserDetails mapToDomain( UserDetailsEntity aEntity ) {
-        if ( aEntity == null ) {
-            return null;
-        }
-        return UserDetails.builder()
-                .id( aEntity.getId() )
-                .userId( aEntity.getUserId() )
-                .userName( aEntity.getUserName() )
-                .emailAddress( aEntity.getEmailAddress() )
-                .description( aEntity.getDescription() )
-                .build();
-    }
-
-    private static UserDetailsEntity mapToEntity( UserDetails aUserDetails ) {
-        if ( aUserDetails == null ) {
-            return null;
-        }
-        return UserDetailsEntity.builder()
-                .id( aUserDetails.getId() )
-                .userId( aUserDetails.getUserId() )
-                .userName( aUserDetails.getUserName() )
-                .emailAddress( aUserDetails.getEmailAddress() )
-                .description( aUserDetails.getDescription() )
-                .build();
     }
 }

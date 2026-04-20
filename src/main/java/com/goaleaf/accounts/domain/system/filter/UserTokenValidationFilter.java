@@ -2,8 +2,9 @@ package com.goaleaf.accounts.domain.system.filter;
 
 import com.github.pplociennik.commons.system.registry.CollectingSystemRegistry;
 import com.goaleaf.accounts.api.dto.response.AuthenticationTokenDto;
-import com.goaleaf.accounts.api.dto.user.UserSessionDetailsDto;
+import com.goaleaf.accounts.api.map.AuthenticationTokenMapper;
 import com.goaleaf.accounts.domain.auth.AuthenticationService;
+import com.goaleaf.accounts.domain.session.model.UserSessionDetails;
 import com.goaleaf.accounts.domain.session.UserSessionDetailsService;
 import com.goaleaf.accounts.domain.system.exc.auth.SessionExpiredException;
 import com.goaleaf.accounts.domain.system.util.AccessTokenUtils;
@@ -166,8 +167,8 @@ public class UserTokenValidationFilter extends OncePerRequestFilter {
      */
     private String resolveInvalidToken( String aUserAccessToken ) {
         String sessionId = AccessTokenUtils.getSessionId( aUserAccessToken );
-        Optional< UserSessionDetailsDto > optionalDetails = userSessionDetailsService.getUserSessionDetails( sessionId );
-        UserSessionDetailsDto details = getMandatoryValue( optionalDetails );
+        Optional< UserSessionDetails > optionalDetails = userSessionDetailsService.getUserSessionDetails( sessionId );
+        UserSessionDetails details = getMandatoryValue( optionalDetails );
 
         String refreshToken = details.getRefreshToken();
         validateRefreshToken( aUserAccessToken, refreshToken );
@@ -181,7 +182,7 @@ public class UserTokenValidationFilter extends OncePerRequestFilter {
         }
 
         userSessionDetailsService.deleteSessionDetails( sessionId );
-        userSessionDetailsService.createUserSessionDetails( details, refreshedToken );
+        userSessionDetailsService.createUserSessionDetails( details, AuthenticationTokenMapper.mapToDomain( refreshedToken ) );
 
         return newUserAccessToken;
     }

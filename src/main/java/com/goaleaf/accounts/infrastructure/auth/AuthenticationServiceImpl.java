@@ -9,7 +9,9 @@ import com.goaleaf.accounts.api.dto.response.AuthenticationResponseDto;
 import com.goaleaf.accounts.api.dto.response.AuthenticationResponseUserDataDto;
 import com.goaleaf.accounts.api.dto.response.AuthenticationTokenDto;
 import com.goaleaf.accounts.api.dto.response.KeycloakErrorResponseDto;
+import com.goaleaf.accounts.api.dto.auth.AuthenticationDetailsDto;
 import com.goaleaf.accounts.api.dto.user.UserDetailsDto;
+import com.goaleaf.accounts.api.map.AuthenticationTokenMapper;
 import com.goaleaf.accounts.api.map.UserDetailsMapper;
 import com.goaleaf.accounts.domain.KeycloakClient;
 import com.goaleaf.accounts.domain.account.AccountService;
@@ -25,8 +27,7 @@ import com.goaleaf.accounts.domain.system.util.AccessTokenUtils;
 import com.goaleaf.accounts.domain.system.util.KeycloakUrlTemplates;
 import com.goaleaf.accounts.domain.user.UserDetailsService;
 import com.goaleaf.accounts.domain.user.model.UserDetails;
-import com.goaleaf.accounts.infrastructure.persistence.dao.UserSessionDetailsDao;
-import com.goaleaf.accounts.infrastructure.persistence.entity.UserSessionDetailsEntity;
+import com.goaleaf.accounts.domain.session.model.UserSessionDetails;
 import lombok.AllArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.log4j.Log4j2;
@@ -44,11 +45,18 @@ import static com.goaleaf.accounts.domain.system.util.KeycloakUrlTemplates.TERMI
 import static java.util.Objects.requireNonNull;
 
 /**
- * Implementation of the {@link AuthenticationService} interface responsible for managing user authentication processes. This class provides the functionality to interact with the authentication system
- * to register new user accounts, authenticate user in the system or terminate user sessions.
+ * Implementation of the {@link AuthenticationService} interface responsible for managing user authentication processes.
  *
- * <p><b>Author:</b> Pplociennik</p>
- * <p><b>Created:</b> 19.03.2025 19:03</p>
+ * <p>This class provides functionality to interact with the authentication system to register new user accounts,
+ * authenticate users in the system, and manage user sessions including termination and refreshing.</p>
+ *
+ * <p>Integrations include Keycloak for identity management and local session tracking via {@link UserSessionDetailsService}.</p>
+ *
+ * @author Pplociennik
+ * @since 1.0
+ * @see AuthenticationService
+ * @see KeycloakClient
+ * @see UserSessionDetailsService
  */
 @Service
 @AllArgsConstructor
@@ -56,53 +64,60 @@ import static java.util.Objects.requireNonNull;
 class AuthenticationServiceImpl implements AuthenticationService {
 
     /**
-     * A service for reading system properties configuration.
-     * This variable is used to retrieve system-specific properties required in the authentication-related operations.
+     * Service for reading system properties configuration.
+     *
+     * <p>Used to retrieve system-specific properties such as Keycloak realm name, client ID, and client secret
+     * required for authentication-related operations.</p>
      */
     private final SystemPropertiesReaderService systemPropertiesReaderService;
 
     /**
-     * A service for handling validation logic in the authentication process.
+     * Service for handling validation logic in the authentication process.
+     *
+     * <p>Validates registration requests and other authentication-related data before processing.</p>
      */
     private final AuthenticationValidationService authenticationValidationService;
 
     /**
-     * A service used for managing user details related operations within the system.
+     * Service for managing user details operations within the system.
+     *
+     * <p>Handles operations such as creating and retrieving user details from local storage.</p>
      */
     private final UserDetailsService userDetailsService;
 
     /**
-     * A service used for performing operations
-     * related to account management, such as credential management.
+     * Service for performing account management operations.
+     *
+     * <p>Handles credential management, email verification checks, and account-related queries.</p>
      */
     private final AccountService accountService;
 
     /**
-     * A service responsible for connecting to the keycloak server.
+     * Client service responsible for communicating with the Keycloak authentication server.
+     *
+     * <p>Manages WebClient connections, token requests, and session operations with Keycloak.</p>
      */
     private KeycloakClient keycloakConnectionService;
 
     /**
      * Service responsible for managing user session-related operations.
+     *
+     * <p>Handles creation, retrieval, updating, and deletion of user session details in local storage.</p>
      */
     private UserSessionDetailsService userSessionDetailsService;
 
-    /**
-     * Repository for managing user session details.
-     */
-    private UserSessionDetailsDao userSessionDetailsDao;
 
 
     /**
-     * Registers a new user account by sending the registration request to the authentication service.
-     * Validates the registration request and creates the user account after receiving a successful response.
+     * Registers a new user account by sending the registration request to the Keycloak authentication service.
      *
-     * @param aDto
-     *         the registration request data transfer object containing user registration details
-     * @return a UserDetailsDto object representing the newly registered user details
+     * <p>Validates the registration request, communicates with Keycloak to create the user account,
+     * and then creates a corresponding user details record in the local system.</p>
      *
-     * @throws RegistrationFailedException
-     *         if the registration process encounters an error
+     * @param aDto the registration request data transfer object containing user registration details
+     * @return a {@code UserDetailsDto} object representing the newly registered user details
+     * @throws NullPointerException if {@code aDto} is null
+     * @throws RegistrationFailedException if the registration process encounters an error from Keycloak
      */
     @Override
     public UserDetailsDto registerUserAccount( @NonNull RegistrationRequestDto aDto ) {
@@ -130,20 +145,16 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     /**
-     * Authenticates a user account and returns an authentication response containing
-     * user details and authentication tokens. This method communicates with a Keycloak
-     * authentication server and performs required verifications.
+     * Authenticates a user account and returns an authentication response containing user details and authentication tokens.
      *
-     * @param aDto
-     *         the data transfer object containing the user's email and password for authentication
-     * @return an AuthenticationResponseDto containing the authenticated user's details and authentication token
+     * <p>Verifies that the user's email is verified, communicates with Keycloak to validate credentials,
+     * and creates a local session record. The method returns both authentication tokens and user details.</p>
      *
-     * @throws NullPointerException
-     *         if the provided authentication request DTO is null
-     * @throws AuthenticationFailedException
-     *         if the authentication process fails or invalid credentials are provided
-     * @throws AccountNotVerifiedException
-     *         if the email address related to the account hasn't been verified yet
+     * @param aDto the data transfer object containing the user's email and password for authentication
+     * @return an {@code AuthenticationResponseDto} containing the authenticated user's details and authentication token
+     * @throws NullPointerException if {@code aDto} is null
+     * @throws AuthenticationFailedException if the authentication process fails or invalid credentials are provided
+     * @throws AccountNotVerifiedException if the email address related to the account has not been verified
      */
     @Override
     public AuthenticationResponseDto authenticateUserAccount( @NonNull AuthenticationRequestDto aDto ) {
@@ -177,7 +188,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
             throw new AuthenticationFailedException( AccountsExcTranslationKey.AUTHENTICATION_FAILED, aDto.getEmail(), errorResponse.getErrorDescription() );
         }
 
-        userSessionDetailsService.createUserSessionDetails( aDto, requireNonNull( authenticationToken ) );
+        UserSessionDetails sessionContext = buildSessionContext( aDto );
+        userSessionDetailsService.createUserSessionDetails( sessionContext, AuthenticationTokenMapper.mapToDomain( requireNonNull( authenticationToken ) ) );
         UserDetails userDetails = userDetailsService.findUserDetailsByEmail( aDto.getEmail() );
         AuthenticationResponseUserDataDto userDataDto = new AuthenticationResponseUserDataDto( userDetails.getUserName() );
         return new AuthenticationResponseDto( userDataDto, authenticationToken );
@@ -186,9 +198,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
     /**
      * Terminates all active sessions associated with the user identified by the provided access token.
      *
-     * @param aUserAccessToken
-     *         a non-null {@code String} that represents the access token of the user whose sessions are to be terminated.
-     * @return {@code true} if the user sessions were successfully terminated.
+     * <p>Extracts the user ID from the access token and sends a termination request to Keycloak
+     * to invalidate all active sessions for that user.</p>
+     *
+     * @param aUserAccessToken a non-null string representing the access token of the user whose sessions are to be terminated
+     * @return {@code true} if the user sessions were successfully terminated
+     * @throws NullPointerException if {@code aUserAccessToken} is null
+     * @throws KeycloakActionRequestFailedException if the termination request fails
      */
     @Override
     public boolean terminateAllSessions( @NonNull String aUserAccessToken ) {
@@ -221,9 +237,12 @@ class AuthenticationServiceImpl implements AuthenticationService {
     /**
      * Terminates the current user's session associated with the provided user access token.
      *
-     * @param aUserAccessToken
-     *         the access token of the user whose session needs to be terminated; must not be null
-     * @return true if the session is successfully terminated
+     * <p>Extracts the session ID from the access token and terminates only that specific session.</p>
+     *
+     * @param aUserAccessToken the access token of the user whose session needs to be terminated; must not be null
+     * @return {@code true} if the session is successfully terminated
+     * @throws NullPointerException if {@code aUserAccessToken} is null
+     * @throws KeycloakActionRequestFailedException if the termination request fails
      */
     @Override
     public boolean terminateCurrentUserSession( @NonNull String aUserAccessToken ) {
@@ -233,14 +252,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     /**
-     * Refreshes the user session by invalidating the current session and generating a new authentication token.
+     * Refreshes the user session by generating a new authentication token using the refresh token.
      *
-     * @param aUserAccessToken
-     *         the current access token associated with the session to be refreshed
-     * @return a new {@code AuthenticationTokenDto} containing the refreshed access and refresh token information
+     * <p>Retrieves the session details from local storage using the session ID extracted from the access token,
+     * sends a refresh token request to Keycloak, and updates the local session record with the new token.</p>
      *
-     * @throws NullPointerException
-     *         if {@code aAuthenticationRequestDto} or {@code aAccessToken} is null
+     * @param aUserAccessToken the current access token associated with the session to be refreshed
+     * @return a new {@code AuthenticationTokenDto} containing the refreshed access and refresh token information,
+     *         or null if the session details cannot be found
+     * @throws NullPointerException if {@code aUserAccessToken} is null
      */
     @Override
     @Synchronized
@@ -248,11 +268,11 @@ class AuthenticationServiceImpl implements AuthenticationService {
         log.info( "Refreshing user session details" );
         requireNonNull( aUserAccessToken );
         String sessionId = getSessionId( aUserAccessToken );
-        UserSessionDetailsEntity sessionDetails = getOptionalValue( userSessionDetailsDao.findBySessionId( sessionId ) );
+        UserSessionDetails sessionDetails = getOptionalValue( userSessionDetailsService.getUserSessionDetails( sessionId ) );
 
         if ( sessionDetails != null ) {
             AuthenticationTokenDto refreshedToken = keycloakConnectionService.sendRefreshTokenRequest( sessionDetails.getRefreshToken() );
-            userSessionDetailsService.updateSessionDetails( sessionDetails, refreshedToken );
+            userSessionDetailsService.updateSessionDetails( sessionDetails, AuthenticationTokenMapper.mapToDomain( refreshedToken ) );
             return refreshedToken;
         }
 
@@ -260,10 +280,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     /**
-     * Deletes an active user session identified by the given session ID. Session should be deleted when it is no longer valid and cannot be refreshed.
+     * Deletes an active user session identified by the given session ID.
      *
-     * @param aSessionId
-     *         a non-null string representing the unique identifier of the session to be deleted.
+     * <p>Session should be deleted when it is no longer valid and cannot be refreshed. This sends
+     * a deletion request to the Keycloak client to clean up the session record.</p>
+     *
+     * @param aSessionId a non-null string representing the unique identifier of the session to be deleted
+     * @throws NullPointerException if {@code aSessionId} is null
      */
     @Override
     public void deleteUserSession( @NonNull String aSessionId ) {
@@ -274,11 +297,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
     /**
      * Terminates an active user session with the given session ID.
      *
-     * @param aUserAccessToken
-     *         the access token used to authenticate the session termination request
-     * @param aSessionId
-     *         the unique identifier of the user session to be terminated
-     * @return true if the session is successfully terminated
+     * <p>Sends a termination request to Keycloak and removes the session details from local storage.</p>
+     *
+     * @param aUserAccessToken the access token used to authenticate the session termination request; must not be null
+     * @param aSessionId the unique identifier of the user session to be terminated; must not be null
+     * @return {@code true} if the session is successfully terminated
+     * @throws NullPointerException if {@code aUserAccessToken} or {@code aSessionId} is null
+     * @throws KeycloakActionRequestFailedException if the termination request fails
      */
     @Override
     public boolean terminateSession( @NonNull String aUserAccessToken, @NonNull String aSessionId ) {
@@ -304,6 +329,38 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return true;
     }
 
+    /**
+     * Builds a user session context from the authentication request.
+     *
+     * <p>Extracts location and device information from the authentication details and constructs
+     * a {@code UserSessionDetails} object with these details.</p>
+     *
+     * @param aDto the authentication request containing session context details; must not be null
+     * @return a {@code UserSessionDetails} object with location and device information
+     * @throws NullPointerException if {@code aDto} is null
+     */
+    private UserSessionDetails buildSessionContext( @NonNull AuthenticationRequestDto aDto ) {
+        AuthenticationDetailsDto details = aDto.getDetails();
+        String location = details != null ? details.getLocation() : null;
+        String device = details != null ? details.getDeviceName() : null;
+        return UserSessionDetails.builder()
+                .location( location )
+                .device( device )
+                .build();
+    }
+
+    /**
+     * Creates internal user details record after successful user registration.
+     *
+     * <p>Retrieves the account information from Keycloak using the access token, maps the account
+     * and registration request data to a user details domain object, persists it in the local system,
+     * and returns the mapped data transfer object.</p>
+     *
+     * @param aAccessToken the access token for authenticating the request to retrieve account details; must not be null
+     * @param aDto the registration request containing user details; must not be null
+     * @return a {@code UserDetailsDto} representing the newly created user details
+     * @throws NullPointerException if {@code aAccessToken} or {@code aDto} is null
+     */
     private UserDetailsDto createInnerUserDetails( @NonNull String aAccessToken, @NonNull RegistrationRequestDto aDto ) {
         requireNonNull( aDto );
         AccountDto retrievedAccount = accountService.getAccountByEmailAddress( aAccessToken, aDto.getEmail() );

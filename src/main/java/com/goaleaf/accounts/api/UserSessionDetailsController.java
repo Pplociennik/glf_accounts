@@ -2,7 +2,9 @@ package com.goaleaf.accounts.api;
 
 import com.github.pplociennik.commons.dto.ResponseDto;
 import com.goaleaf.accounts.api.dto.response.UserSessionResponseDto;
+import com.goaleaf.accounts.api.map.UserSessionInfoMapper;
 import com.goaleaf.accounts.domain.session.UserSessionDetailsService;
+import com.goaleaf.accounts.domain.session.model.UserSessionInfo;
 import com.goaleaf.accounts.domain.system.util.AccessTokenUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -12,6 +14,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -57,6 +60,8 @@ class UserSessionDetailsController {
     /**
      * Retrieves a list of all user sessions associated with the provided access token.
      *
+     * @param aTokenRefreshed indicates whether the user access token has been refreshed
+     * @param aUserAccessToken the user access token from the request header
      * @return a {@code ResponseEntity} containing a list of {@code UserSessionResponseDto} objects,
      * each representing details of a user session, and an HTTP status of ACCEPTED.
      */
@@ -65,7 +70,10 @@ class UserSessionDetailsController {
     ResponseEntity< ResponseDto< UserSessionResponseDto > > getUserSessions( @RequestAttribute( value = "USER_ACCESS_TOKEN_REFRESHED" ) @NonNull boolean aTokenRefreshed, @NonNull @RequestHeader( value = "User-Token" ) String aUserAccessToken ) {
         log.debug( "Getting user sessions for {}", aUserAccessToken );
         requireNonNull( aUserAccessToken, "User-Token" );
-        List< UserSessionResponseDto > allUserSessionDetails = userSessionDetailsService.getAllUserSessionsInfo( aUserAccessToken );
+        List< UserSessionInfo > sessionInfoList = userSessionDetailsService.getAllUserSessionsInfo( aUserAccessToken );
+        List< UserSessionResponseDto > allUserSessionDetails = sessionInfoList.stream()
+                .map( UserSessionInfoMapper::mapToDto )
+                .collect( Collectors.toList() );
         return ResponseEntity
                 .status( HttpStatus.ACCEPTED )
                 .body(

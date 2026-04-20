@@ -2,23 +2,19 @@ package com.goaleaf.accounts.infrastructure.session;
 
 import com.github.pplociennik.commons.service.SystemPropertiesReaderService;
 import com.github.pplociennik.commons.service.TimeService;
-import com.goaleaf.accounts.api.dto.auth.AuthenticationDetailsDto;
-import com.goaleaf.accounts.api.dto.auth.AuthenticationRequestDto;
 import com.goaleaf.accounts.api.dto.keycloak.session.UserSessionRepresentationDto;
-import com.goaleaf.accounts.api.dto.response.AuthenticationTokenDto;
-import com.goaleaf.accounts.api.dto.response.UserSessionResponseDto;
-import com.goaleaf.accounts.api.dto.user.UserSessionDetailsDto;
-import com.goaleaf.accounts.api.map.UserSessionDetailsMapper;
-import com.goaleaf.accounts.infrastructure.persistence.entity.UserSessionDetailsEntity;
-import com.goaleaf.accounts.infrastructure.persistence.dao.UserSessionDetailsDao;
 import com.goaleaf.accounts.domain.KeycloakClient;
-import com.goaleaf.accounts.domain.user.UserDetailsService;
+import com.goaleaf.accounts.domain.auth.model.AuthenticationToken;
 import com.goaleaf.accounts.domain.session.UserSessionDetailsService;
+import com.goaleaf.accounts.domain.session.model.UserSessionDetails;
+import com.goaleaf.accounts.domain.session.model.UserSessionInfo;
+import com.goaleaf.accounts.domain.session.port.UserSessionDetailsRepository;
 import com.goaleaf.accounts.domain.system.util.KeycloakUrlTemplates;
 import com.goaleaf.accounts.domain.system.util.token.AccessTokenValidationStrategy;
 import com.goaleaf.accounts.domain.system.util.token.OfflineValidationStrategy;
 import com.goaleaf.accounts.domain.system.util.token.OnlineValidationStrategy;
 import com.goaleaf.accounts.domain.system.util.token.TokenValidationStrategy;
+import com.goaleaf.accounts.domain.user.UserDetailsService;
 import lombok.AllArgsConstructor;
 import lombok.Synchronized;
 import lombok.extern.log4j.Log4j2;
@@ -27,13 +23,11 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.github.pplociennik.commons.utility.OptionalUtils.getMandatoryValue;
-import static com.github.pplociennik.commons.utility.OptionalUtils.getOptionalValue;
 import static com.goaleaf.accounts.domain.system.properties.AccountsSystemProperties.ACCESS_TOKEN_VALIDATION_STRATEGY;
 import static com.goaleaf.accounts.domain.system.properties.AccountsSystemProperties.KEYCLOAK_REALM_NAME;
 import static com.goaleaf.accounts.domain.system.util.AccessTokenUtils.getSessionId;
@@ -50,7 +44,7 @@ import static java.util.Objects.requireNonNull;
  * @author Created by: Pplociennik at 01.04.2025 20:37
  * @since 1.0
  * @see UserSessionDetailsService
- * @see UserSessionDetailsDao
+ * @see UserSessionDetailsRepository
  */
 @Log4j2
 @Service
@@ -58,104 +52,70 @@ import static java.util.Objects.requireNonNull;
 class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
 
     /**
-     * A repository interface for managing user session entities in the database.
-     * Provides various methods for performing CRUD operations on user session details.
-     * Acts as the data-access layer for handling {@link UserSessionDetailsEntity} objects, leveraging JPA for persistence.
+     * A repository used for performing CRUD operations on {@link UserSessionDetails} domain objects.
      */
-    private final UserSessionDetailsDao userSessionDetailsDao;
+    private final UserSessionDetailsRepository userSessionDetailsRepository;
 
     /**
-     * Provides access to time-related services, enabling functionalities such as retrieving
-     * the current time, calculating durations, and time-specific operations required within
-     * the user session management context.
+     * Provides access to time-related services.
      */
     private final TimeService timeService;
 
     /**
      * A service responsible for reading and managing system properties.
-     * It provides mechanisms to access system-level configuration details,
-     * ensuring a centralized and consistent approach to handle these properties
-     * across the application.
      */
     private final SystemPropertiesReaderService systemPropertiesReaderService;
 
     /**
-     * A final instance of AuthServiceRequestingService that represents the service responsible
-     * for handling requests related to authentication. This variable is used to perform
-     * operations or interact with the authentication service, ensuring secure request
-     * processing within the system. Being final ensures its reference cannot be changed after
-     * initialization.
+     * A client for interacting with the Keycloak authentication server.
      */
     private final KeycloakClient keycloakClient;
 
     /**
      * A service responsible for handling user details retrieval and management operations.
-     * This variable is immutable and is intended to provide functionality for managing
-     * and accessing information related to user authentication and profile details.
      */
     private final UserDetailsService userDetailsService;
 
     /**
-     * Creates and persists details of a user session based on the provided authentication request and token.
-     * The method extracts necessary information from the input parameters, creates a new session entity,
-     * saves it to the repository, and maps the saved entity to its corresponding DTO.
+     * Creates user session details using the provided session context and authentication token.
      *
-     * @param aDto
-     *         the authentication request containing details required to create the session
+     * @param aSessionContext
+     *         a non-null {@link UserSessionDetails} carrying location and device information
      * @param aAuthenticationToken
-     *         the authentication token containing user credentials and session information
-     * @return the DTO representation of the saved user session details
+     *         a non-null {@link AuthenticationToken} containing the new token information
+     * @return the {@link UserSessionDetails} of the saved session
      *
      * @throws NullPointerException
      *         if any of the input parameters are null
      */
     @Override
-    public UserSessionDetailsDto createUserSessionDetails( @NonNull AuthenticationRequestDto aDto, @NonNull AuthenticationTokenDto aAuthenticationToken ) {
+    public UserSessionDetails createUserSessionDetails( @NonNull UserSessionDetails aSessionContext, @NonNull AuthenticationToken aAuthenticationToken ) {
         log.info( "Creating user session details" );
-        requireNonNull( aDto );
+        requireNonNull( aSessionContext );
         requireNonNull( aAuthenticationToken );
-        String userId = getUserId( aAuthenticationToken );
-        String sessionId = getSessionId( aAuthenticationToken );
-        AuthenticationDetailsDto details = aDto.getDetails();
+        String userId = getUserId( aAuthenticationToken.getAccessToken() );
+        String sessionId = getSessionId( aAuthenticationToken.getAccessToken() );
 
-        UserSessionDetailsEntity sessionDetails = createUserSessionDetails( aAuthenticationToken, userId, details, sessionId );
-        UserSessionDetailsEntity savedSessionDetails = userSessionDetailsDao.save( sessionDetails );
-        return UserSessionDetailsMapper.mapToDto( savedSessionDetails );
+        UserSessionDetails sessionDetails = UserSessionDetails.builder()
+                .authenticatedUserId( userId )
+                .location( aSessionContext.getLocation() )
+                .device( aSessionContext.getDevice() )
+                .sessionId( sessionId )
+                .refreshToken( aAuthenticationToken.getRefreshToken() )
+                .build();
+
+        return userSessionDetailsRepository.save( sessionDetails );
     }
 
     /**
-     * Creates user session details based on the provided data transfer object and authentication token.
-     *
-     * @param aDto
-     *         the data transfer object containing user session details information
-     * @param aAuthenticationToken
-     *         the authentication token used to fetch user and session identification details
-     * @return the data transfer object containing the created and saved user session details
-     */
-    @Override
-    public UserSessionDetailsDto createUserSessionDetails( @NonNull UserSessionDetailsDto aDto, @NonNull AuthenticationTokenDto aAuthenticationToken ) {
-        log.info( "Creating user session details" );
-        requireNonNull( aDto );
-        requireNonNull( aAuthenticationToken );
-        String userId = getUserId( aAuthenticationToken );
-        String sessionId = getSessionId( aAuthenticationToken );
-        AuthenticationDetailsDto details = new AuthenticationDetailsDto( aDto.getLocation(), aDto.getDevice() );
-
-        UserSessionDetailsEntity sessionDetails = createUserSessionDetails( aAuthenticationToken, userId, details, sessionId );
-        UserSessionDetailsEntity savedSessionDetails = userSessionDetailsDao.save( sessionDetails );
-        return UserSessionDetailsMapper.mapToDto( savedSessionDetails );
-    }
-
-    /**
-     * Retrieves a list of all user session details associated with the provided access token.
+     * Retrieves publicly visible information about all sessions associated with the specified user access token.
      *
      * @param aAccessToken
-     *         a non-null string representing the access token used to authenticate and identify the user sessions.
-     * @return a list of {@code UserSessionResponseDto} objects containing details about the user sessions,
-     * such as session ID, IP address, session timing, location, and device information.
+     *         a non-null string representing the user's access token.
+     * @return a list of {@link UserSessionInfo} objects describing each active session.
      */
     @Override
-    public List< UserSessionResponseDto > getAllUserSessionsInfo( @NonNull String aAccessToken ) {
+    public List<UserSessionInfo> getAllUserSessionsInfo( @NonNull String aAccessToken ) {
         log.debug( "getAllUserSessionDetails called" );
         requireNonNull( aAccessToken );
 
@@ -165,14 +125,13 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
 
         WebClient client = keycloakClient.getAuthServiceConnectionWebClient( KeycloakUrlTemplates.GET_ALL_SESSIONS_URL_TEMPLATE, realmName, userId );
         try {
-            List< UserSessionRepresentationDto > keycloakSessionsRep = client.get()
+            List<UserSessionRepresentationDto> keycloakSessionsRep = client.get()
                     .header( "Authorization", clientAccessToken )
                     .retrieve()
-                    .bodyToMono( new ParameterizedTypeReference< List< UserSessionRepresentationDto > >() {
-                    } )
+                    .bodyToMono( new ParameterizedTypeReference<List<UserSessionRepresentationDto>>() {} )
                     .block();
 
-            return createDetailsResponses( userId, requireNonNull( keycloakSessionsRep ) );
+            return buildSessionInfoList( userId, requireNonNull( keycloakSessionsRep ) );
         } catch ( Exception aE ) {
             throw new IllegalStateException( "Failed to get user session details: ", aE );
         }
@@ -193,7 +152,7 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
         AccessTokenValidationStrategy strategyForExecution = strategy == OFFLINE
                 ? new OfflineValidationStrategy( timeService )
                 : new OnlineValidationStrategy( keycloakClient );
-        return validateToken( strategyForExecution, aAccessToken );
+        return strategyForExecution.validateAccessToken( aAccessToken );
     }
 
     /**
@@ -201,36 +160,30 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
      *
      * @param aSessionId
      *         a non-null {@code String} representing the unique identifier of the user session.
-     * @return an {@code Optional} containing a {@code UserSessionDetailsDto} if the session details are found,
-     * or an empty {@code Optional} if no matching session details exist.
+     * @return an {@link Optional} containing a {@link UserSessionDetails} if the session details are found,
+     * or an empty {@link Optional} if no matching session details exist.
      */
     @Override
-    public Optional< UserSessionDetailsDto > getUserSessionDetails( @NonNull String aSessionId ) {
+    public Optional<UserSessionDetails> getUserSessionDetails( @NonNull String aSessionId ) {
         requireNonNull( aSessionId );
-        Optional< UserSessionDetailsEntity > optionalSessionDetails = userSessionDetailsDao.findBySessionId( aSessionId );
-        UserSessionDetailsEntity sessionDetails = getOptionalValue( optionalSessionDetails );
-        UserSessionDetailsDto resultDto = UserSessionDetailsMapper.mapToDto( sessionDetails );
-        return Optional.ofNullable( resultDto );
+        return userSessionDetailsRepository.findBySessionId( aSessionId );
     }
 
     /**
      * Deletes the specified user session details from the system.
      *
      * @param aSessionDetails
-     *         the {@code UserSessionDetails} object representing the session details
-     *         to be removed; must not be null.
+     *         the {@link UserSessionDetails} object representing the session to be removed; must not be null.
      */
     @Synchronized
     @Override
-    public void deleteSessionDetails( @NonNull UserSessionDetailsEntity aSessionDetails ) {
+    public void deleteSessionDetails( @NonNull UserSessionDetails aSessionDetails ) {
         requireNonNull( aSessionDetails );
-        userSessionDetailsDao.delete( aSessionDetails );
+        userSessionDetailsRepository.delete( aSessionDetails );
     }
 
     /**
      * Deletes the session details associated with the provided session ID.
-     * This method ensures that the session ID is not null and retrieves the
-     * corresponding active session details to delete from the repository.
      *
      * @param aSessionId
      *         the unique identifier of the session to be deleted; must not be null
@@ -238,126 +191,60 @@ class UserSessionDetailsServiceImpl implements UserSessionDetailsService {
     @Override
     public void deleteSessionDetails( @NonNull String aSessionId ) {
         requireNonNull( aSessionId );
-        Optional< UserSessionDetailsEntity > optionalUserSessionDetails = userSessionDetailsDao.findBySessionId( aSessionId );
-        UserSessionDetailsEntity sessionDetails = getMandatoryValue( optionalUserSessionDetails );
-        userSessionDetailsDao.delete( sessionDetails );
+        Optional<UserSessionDetails> optionalUserSessionDetails = userSessionDetailsRepository.findBySessionId( aSessionId );
+        UserSessionDetails sessionDetails = getMandatoryValue( optionalUserSessionDetails );
+        userSessionDetailsRepository.delete( sessionDetails );
     }
 
     /**
-     * Updates the specified user session details in the system.
+     * Updates the specified user session details with a new authentication token.
      *
      * @param aSessionDetails
-     *         the {@code UserSessionDetails} object containing the updated session information;
-     *         must not be null.
+     *         the {@link UserSessionDetails} object containing the current session information; must not be null.
      * @param aAuthenticationToken
-     *         the {@code AuthenticationTokenDto} containing the new authentication token details
-     *         to update the session with; must not be null.
+     *         the {@link AuthenticationToken} containing the new token details; must not be null.
      */
     @Override
-    public void updateSessionDetails( @NonNull UserSessionDetailsEntity aSessionDetails, @NonNull AuthenticationTokenDto aAuthenticationToken ) {
-        aSessionDetails.setRefreshToken( aAuthenticationToken.getRefreshToken() );
-        userSessionDetailsDao.save( aSessionDetails );
+    public void updateSessionDetails( @NonNull UserSessionDetails aSessionDetails, @NonNull AuthenticationToken aAuthenticationToken ) {
+        UserSessionDetails updated = UserSessionDetails.builder()
+                .id( aSessionDetails.getId() )
+                .sessionId( aSessionDetails.getSessionId() )
+                .authenticatedUserId( aSessionDetails.getAuthenticatedUserId() )
+                .location( aSessionDetails.getLocation() )
+                .device( aSessionDetails.getDevice() )
+                .refreshToken( aAuthenticationToken.getRefreshToken() )
+                .build();
+        userSessionDetailsRepository.save( updated );
     }
 
-    /**
-     * Validates the provided token using the specified validation strategy.
-     *
-     * @param aStrategy
-     *         the validation strategy to use for token validation; must not be null.
-     * @param aToken
-     *         the access token to validate; must not be null.
-     * @return {@code true} if the token is valid; {@code false} otherwise.
-     */
-    private boolean validateToken( @NonNull AccessTokenValidationStrategy aStrategy, @NonNull String aToken ) {
-        return aStrategy.validateAccessToken( aToken );
-    }
-
-    /**
-     * Creates a list of user session response DTOs by combining Keycloak session representations
-     * with locally stored session details.
-     *
-     * @param aUserId
-     *         the unique identifier of the user; must not be null.
-     * @param aKeycloakSessionRepresentations
-     *         the list of session representations retrieved from Keycloak; must not be null.
-     * @return a list of {@code UserSessionResponseDto} objects containing combined session information.
-     */
-    private List< UserSessionResponseDto > createDetailsResponses( @NonNull String aUserId, @NonNull List< UserSessionRepresentationDto > aKeycloakSessionRepresentations ) {
+    private List<UserSessionInfo> buildSessionInfoList( @NonNull String aUserId, @NonNull List<UserSessionRepresentationDto> aKeycloakSessions ) {
         requireNonNull( aUserId );
-        requireNonNull( aKeycloakSessionRepresentations );
-        List< UserSessionDetailsEntity > detailsList = userSessionDetailsDao.findByAuthenticatedUserId( aUserId );
+        requireNonNull( aKeycloakSessions );
+        List<UserSessionDetails> detailsList = userSessionDetailsRepository.findByAuthenticatedUserId( aUserId );
 
-        return aKeycloakSessionRepresentations.stream()
-                .map( rep -> mapToResponseDto( rep, detailsList ) )
+        return aKeycloakSessions.stream()
+                .map( rep -> buildSessionInfo( rep, detailsList ) )
                 .collect( Collectors.toList() );
     }
 
-    /**
-     * Maps a Keycloak session representation to a user session response DTO by combining
-     * Keycloak data with local session details.
-     *
-     * @param aKeycloakRepresentation
-     *         the Keycloak session representation containing session metadata.
-     * @param aDetailsList
-     *         the list of local session details to search for matching session information.
-     * @return a {@code UserSessionResponseDto} containing combined session information.
-     * @throws IllegalStateException
-     *         if no matching local session details are found for the Keycloak session.
-     */
-    private UserSessionResponseDto mapToResponseDto( UserSessionRepresentationDto aKeycloakRepresentation, List< UserSessionDetailsEntity > aDetailsList ) {
-        String sessionId = aKeycloakRepresentation.getId();
-        UserSessionDetailsEntity details = findDetails( aDetailsList, sessionId );
+    private UserSessionInfo buildSessionInfo( UserSessionRepresentationDto aKeycloakRep, List<UserSessionDetails> aDetailsList ) {
+        String sessionId = aKeycloakRep.getId();
+        UserSessionDetails details = findDetails( aDetailsList, sessionId );
 
-        return UserSessionResponseDto.builder()
+        return UserSessionInfo.builder()
                 .id( sessionId )
-                .start( aKeycloakRepresentation.getStart() )
-                .lastAccess( aKeycloakRepresentation.getLastAccess() )
-                .ipAddress( aKeycloakRepresentation.getIpAddress() )
+                .start( aKeycloakRep.getStart() )
+                .lastAccess( aKeycloakRep.getLastAccess() )
+                .ipAddress( aKeycloakRep.getIpAddress() )
                 .location( details.getLocation() )
                 .device( details.getDevice() )
                 .build();
     }
 
-    /**
-     * Finds the session details matching the specified session ID from the provided list.
-     *
-     * @param aDetailsList
-     *         the list of session details to search through.
-     * @param aSessionId
-     *         the unique identifier of the session to find.
-     * @return the {@code UserSessionDetails} matching the given session ID.
-     * @throws IllegalStateException
-     *         if no session details are found for the given session ID.
-     */
-    private UserSessionDetailsEntity findDetails( List< UserSessionDetailsEntity > aDetailsList, String aSessionId ) {
+    private UserSessionDetails findDetails( List<UserSessionDetails> aDetailsList, String aSessionId ) {
         return aDetailsList.stream()
                 .filter( details -> details.getSessionId().equals( aSessionId ) )
                 .findFirst()
                 .orElseThrow( () -> new IllegalStateException( "No such details found" ) );
-    }
-
-    /**
-     * Creates a new {@code UserSessionDetails} entity from the provided authentication and session information.
-     *
-     * @param aAuthenticationToken
-     *         the authentication token containing the refresh token.
-     * @param aUserID
-     *         the unique identifier of the authenticated user.
-     * @param aDetails
-     *         the authentication details containing location and device information.
-     * @param aSessionID
-     *         the unique identifier for the session.
-     * @return a new {@code UserSessionDetails} entity populated with the provided data.
-     */
-    private UserSessionDetailsEntity createUserSessionDetails( AuthenticationTokenDto aAuthenticationToken, String aUserID, AuthenticationDetailsDto aDetails, String aSessionID ) {
-        return UserSessionDetailsEntity.builder()
-                .authenticatedUserId( aUserID )
-                .location( aDetails.getLocation() )
-                .device( aDetails.getDeviceName() )
-                .sessionId( aSessionID )
-                .refreshToken( aAuthenticationToken.getRefreshToken() )
-                .createdAt( Instant.now() )
-                .createdBy( "SYSTEM" )
-                .build();
     }
 }

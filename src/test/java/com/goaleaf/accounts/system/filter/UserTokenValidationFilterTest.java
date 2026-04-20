@@ -3,8 +3,8 @@ package com.goaleaf.accounts.system.filter;
 import com.github.pplociennik.commons.system.registry.CollectingSystemRegistry;
 import com.github.pplociennik.commons.system.registry.impl.HashSetBasedSystemRegistry;
 import com.goaleaf.accounts.api.dto.response.AuthenticationTokenDto;
-import com.goaleaf.accounts.api.dto.user.UserSessionDetailsDto;
 import com.goaleaf.accounts.domain.auth.AuthenticationService;
+import com.goaleaf.accounts.domain.session.model.UserSessionDetails;
 import com.goaleaf.accounts.domain.session.UserSessionDetailsService;
 import com.goaleaf.accounts.domain.system.exc.auth.SessionExpiredException;
 import com.goaleaf.accounts.domain.system.filter.UserTokenValidationFilter;
@@ -269,7 +269,7 @@ class UserTokenValidationFilterTest {
 
         accessTokenUtilsMock.when( () -> AccessTokenUtils.getSessionId( TEST_ACCESS_TOKEN ) ).thenReturn( TEST_SESSION_ID );
 
-        UserSessionDetailsDto details = getUserSessionDetails();
+        UserSessionDetails details = getUserSessionDetails();
         when( userSessionDetailsService.getUserSessionDetails( TEST_SESSION_ID ) ).thenReturn( Optional.of( details ) );
 
         when( userSessionDetailsService.checkAccessToken( TEST_REFRESH_TOKEN ) ).thenReturn( false );
@@ -310,7 +310,7 @@ class UserTokenValidationFilterTest {
         accessTokenUtilsMock.when( () -> AccessTokenUtils.getSessionId( TEST_ACCESS_TOKEN ) ).thenReturn( TEST_SESSION_ID );
 
         // get session details by session id
-        UserSessionDetailsDto details = getUserSessionDetails();
+        UserSessionDetails details = getUserSessionDetails();
         when( userSessionDetailsService.getUserSessionDetails( TEST_SESSION_ID ) ).thenReturn( Optional.of( details ) );
 
         // first check of user access token = false
@@ -418,7 +418,7 @@ class UserTokenValidationFilterTest {
         accessTokenUtilsMock.when( () -> AccessTokenUtils.getSessionId( TEST_ACCESS_TOKEN ) ).thenReturn( TEST_SESSION_ID );
 
         // get user session details by session id
-        UserSessionDetailsDto details = getUserSessionDetails();
+        UserSessionDetails details = getUserSessionDetails();
         when( userSessionDetailsService.getUserSessionDetails( TEST_SESSION_ID ) ).thenReturn( Optional.of( details ) );
 
         // check refresh token = true
@@ -454,11 +454,10 @@ class UserTokenValidationFilterTest {
      *
      * @return a {@link UserSessionDetailsDto} containing the session ID and refresh token.
      */
-    private UserSessionDetailsDto getUserSessionDetails() {
-        UserSessionDetailsDto details = new UserSessionDetailsDto();
-        details.setSessionId( TEST_SESSION_ID );
-        details.setRefreshToken( TEST_REFRESH_TOKEN );
-
-        return details;
+    private UserSessionDetails getUserSessionDetails() {
+        return UserSessionDetails.builder()
+                .sessionId( TEST_SESSION_ID )
+                .refreshToken( TEST_REFRESH_TOKEN )
+                .build();
     }
 }

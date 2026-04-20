@@ -1,10 +1,8 @@
 package com.goaleaf.accounts.domain.session;
 
-import com.goaleaf.accounts.api.dto.auth.AuthenticationRequestDto;
-import com.goaleaf.accounts.api.dto.response.AuthenticationTokenDto;
-import com.goaleaf.accounts.api.dto.response.UserSessionResponseDto;
-import com.goaleaf.accounts.api.dto.user.UserSessionDetailsDto;
-import com.goaleaf.accounts.infrastructure.persistence.entity.UserSessionDetailsEntity;
+import com.goaleaf.accounts.domain.auth.model.AuthenticationToken;
+import com.goaleaf.accounts.domain.session.model.UserSessionDetails;
+import com.goaleaf.accounts.domain.session.model.UserSessionInfo;
 import org.springframework.lang.NonNull;
 
 import java.util.List;
@@ -17,44 +15,30 @@ import java.util.Optional;
  *
  * @author Created by: Pplociennik at 01.04.2025 20:32
  * @since 1.0
- * @see UserSessionDetailsEntity
  */
 public interface UserSessionDetailsService {
 
     /**
-     * Creates user session details based on the provided authentication request data and authentication token.
+     * Creates user session details using the provided session context and authentication token.
+     * The session context supplies location and device information; the token supplies
+     * user identity and the refresh token to be stored.
      *
-     * @param aDto
-     *         the data transfer object containing the user's authentication request details such as username and password.
+     * @param aSessionContext
+     *         a non-null {@link UserSessionDetails} carrying at least location and device information.
      * @param aAuthenticationToken
-     *         the data transfer object containing authentication token details, including access and refresh tokens.
-     * @return a {@code UserSessionDetailsDto} containing details of the user's session, such as the session ID,
-     * creation time, and associated user information.
+     *         a non-null {@link AuthenticationToken} containing the new token information.
+     * @return a {@link UserSessionDetails} containing the newly created session details.
      */
-    UserSessionDetailsDto createUserSessionDetails( @NonNull AuthenticationRequestDto aDto, @NonNull AuthenticationTokenDto aAuthenticationToken );
+    UserSessionDetails createUserSessionDetails( @NonNull UserSessionDetails aSessionContext, @NonNull AuthenticationToken aAuthenticationToken );
 
     /**
-     * Creates user session details based on the provided user session data (old session) and authentication token.
-     *
-     * @param aDto
-     *         a non-null {@code UserSessionDetailsDto} containing the details of the user's session such as session ID,
-     *         user identifier, location, and device information.
-     * @param aAuthenticationToken
-     *         a non-null {@code AuthenticationTokenDto} containing authentication token information,
-     *         including access and refresh tokens.
-     * @return a {@code UserSessionDetailsDto} containing updated or created user session details.
-     */
-    UserSessionDetailsDto createUserSessionDetails( @NonNull UserSessionDetailsDto aDto, @NonNull AuthenticationTokenDto aAuthenticationToken );
-
-    /**
-     * Retrieves a list of all user session details associated with the provided access token.
+     * Retrieves publicly visible information about all sessions associated with the specified user access token.
      *
      * @param aAccessToken
-     *         a non-null string representing the access token used to authenticate and identify the user sessions.
-     * @return a list of {@code UserSessionResponseDto} objects containing details about the user sessions,
-     * such as session ID, IP address, session timing, location, and device information.
+     *         a non-null string representing the user's access token.
+     * @return a list of {@link UserSessionInfo} objects describing each active session.
      */
-    List< UserSessionResponseDto > getAllUserSessionsInfo( @NonNull String aAccessToken );
+    List<UserSessionInfo> getAllUserSessionsInfo( @NonNull String aAccessToken );
 
     /**
      * Validates the provided access token to ensure it is active and authorized for use.
@@ -70,19 +54,18 @@ public interface UserSessionDetailsService {
      *
      * @param aSessionId
      *         a non-null {@code String} representing the unique identifier of the user session.
-     * @return an {@code Optional} containing a {@code UserSessionDetailsDto} if the session details are found,
-     * or an empty {@code Optional} if no matching session details exist.
+     * @return an {@link Optional} containing a {@link UserSessionDetails} if the session details are found,
+     * or an empty {@link Optional} if no matching session details exist.
      */
-    Optional< UserSessionDetailsDto > getUserSessionDetails( @NonNull String aSessionId );
+    Optional<UserSessionDetails> getUserSessionDetails( @NonNull String aSessionId );
 
     /**
      * Deletes the specified user session details from the system.
      *
      * @param aSessionDetails
-     *         the {@code UserSessionDetails} object representing the session details
-     *         to be removed; must not be null.
+     *         the {@link UserSessionDetails} object representing the session to be removed; must not be null.
      */
-    void deleteSessionDetails( @NonNull UserSessionDetailsEntity aSessionDetails );
+    void deleteSessionDetails( @NonNull UserSessionDetails aSessionDetails );
 
     /**
      * Deletes the specified session details identified by the session ID from the system.
@@ -93,14 +76,12 @@ public interface UserSessionDetailsService {
     void deleteSessionDetails( @NonNull String aSessionId );
 
     /**
-     * Updates the specified user session details in the system.
+     * Updates the specified user session details with a new authentication token.
      *
      * @param aSessionDetails
-     *         the {@code UserSessionDetails} object containing the updated session information;
-     *         must not be null.
+     *         the {@link UserSessionDetails} object containing the current session information; must not be null.
      * @param aAuthenticationToken
-     *         the {@code AuthenticationTokenDto} containing the new authentication token details
-     *         to update the session with; must not be null.
+     *         the {@link AuthenticationToken} containing the new token details; must not be null.
      */
-    void updateSessionDetails( @NonNull UserSessionDetailsEntity aSessionDetails, @NonNull AuthenticationTokenDto aAuthenticationToken );
+    void updateSessionDetails( @NonNull UserSessionDetails aSessionDetails, @NonNull AuthenticationToken aAuthenticationToken );
 }
